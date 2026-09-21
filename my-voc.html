@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>حافظة الكلمات — إنكليزي / عربي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f6fb; --card:#ffffff; --ink:#16202e; --muted:#6a778a;
+  --line:#dde3ee; --accent:#2563eb; --accent-ink:#ffffff;
+  --ok:#15803d; --ok-bg:#dcfce7; --bad:#b91c1c; --bad-bg:#fee2e2;
+  --soft:#eef2fb; --shadow:0 1px 2px rgba(16,32,60,.06),0 8px 24px rgba(16,32,60,.07);
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1420; --card:#161e2c; --ink:#e8edf7; --muted:#95a1b7;
+    --line:#263144; --accent:#4f86ff; --accent-ink:#0b1220;
+    --ok:#4ade80; --ok-bg:#12321f; --bad:#fca5a5; --bad-bg:#3a1618;
+    --soft:#1c2536; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1420; --card:#161e2c; --ink:#e8edf7; --muted:#95a1b7;
+  --line:#263144; --accent:#4f86ff; --accent-ink:#0b1220;
+  --ok:#4ade80; --ok-bg:#12321f; --bad:#fca5a5; --bad-bg:#3a1618;
+  --soft:#1c2536; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"Cairo","Segoe UI",Tahoma,system-ui,sans-serif;
+  line-height:1.65; -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:820px;margin:0 auto;padding:16px 14px 60px}
+header h1{font-size:1.35rem;margin:6px 0 2px;font-weight:800}
+header p{margin:0 0 14px;color:var(--muted);font-size:.9rem}
+.tabs{display:flex;gap:6px;background:var(--soft);padding:5px;border-radius:14px;margin-bottom:18px}
+.tabs button{
+  flex:1;border:0;background:transparent;color:var(--muted);font-family:inherit;
+  font-size:.95rem;font-weight:600;padding:9px 6px;border-radius:10px;cursor:pointer
+}
+.tabs button.on{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow);margin-bottom:16px}
+.card h2{margin:0 0 10px;font-size:1.05rem}
+.hint{color:var(--muted);font-size:.85rem;margin:0 0 10px}
+textarea,input[type=text],input[type=password]{
+  width:100%;font-family:inherit;font-size:1rem;color:var(--ink);background:var(--bg);
+  border:1px solid var(--line);border-radius:12px;padding:11px 13px;outline:none
+}
+textarea{min-height:190px;resize:vertical;line-height:1.9;direction:ltr;text-align:left}
+input[type=text]:focus,input[type=password]:focus,textarea:focus{border-color:var(--accent)}
+.btn{
+  border:0;border-radius:12px;padding:11px 18px;font-family:inherit;font-size:.95rem;
+  font-weight:700;cursor:pointer;background:var(--accent);color:var(--accent-ink)
+}
+.btn.ghost{background:var(--soft);color:var(--ink);border:1px solid var(--line)}
+.btn:disabled{opacity:.5;cursor:default}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.seg{display:flex;gap:4px;background:var(--soft);padding:4px;border-radius:12px;border:1px solid var(--line)}
+.seg button{border:0;background:transparent;color:var(--muted);font-family:inherit;font-weight:600;
+  font-size:.85rem;padding:7px 12px;border-radius:9px;cursor:pointer}
+.seg button.on{background:var(--card);color:var(--ink)}
+.groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:9px;margin-top:12px}
+.g{
+  border:1px solid var(--line);background:var(--bg);border-radius:13px;padding:11px 8px;
+  cursor:pointer;text-align:center;font-family:inherit;color:var(--ink)
+}
+.g:hover{border-color:var(--accent)}
+.g .t{font-weight:700;font-size:.95rem}
+.g .s{font-size:.75rem;color:var(--muted);margin-top:2px}
+.g .bar{height:5px;background:var(--line);border-radius:4px;margin-top:8px;overflow:hidden}
+.g .bar i{display:block;height:100%;background:var(--ok);width:0}
+.q{text-align:center;padding:14px 4px 6px}
+.q .lbl{font-size:.8rem;color:var(--muted);letter-spacing:.5px}
+.q .word{font-size:2.1rem;font-weight:800;margin:10px 0 4px;word-break:break-word}
+.q .word.en{direction:ltr}
+#answer{text-align:center;font-size:1.25rem;padding:14px}
+#answer.ltr{direction:ltr}
+.fb{margin-top:12px;border-radius:12px;padding:11px 14px;font-weight:600;display:none}
+.fb.ok{display:block;background:var(--ok-bg);color:var(--ok)}
+.fb.bad{display:block;background:var(--bad-bg);color:var(--bad)}
+.fb .c{font-weight:800;direction:ltr;display:inline-block}
+.meta{display:flex;justify-content:space-between;color:var(--muted);font-size:.85rem;margin-bottom:6px}
+.prog{height:6px;background:var(--soft);border-radius:4px;overflow:hidden;margin-bottom:10px}
+.prog i{display:block;height:100%;background:var(--accent);width:0;transition:width .25s}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right}
+td.en{direction:ltr;text-align:left}
+.scroll{overflow-x:auto}
+.big{font-size:2.6rem;font-weight:800;text-align:center;margin:6px 0}
+.askbox{margin-top:16px;padding-top:14px;border-top:1px dashed var(--line)}
+.ask-q{text-align:center;font-weight:700;margin:0 0 12px;font-size:1rem}
+.mini{border:0;background:transparent;color:var(--bad);cursor:pointer;font-size:1rem;font-family:inherit}
+.tag{font-size:.75rem;background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--muted)}
+.hide{display:none!important}
+.wordRow{display:flex;align-items:center;justify-content:center;gap:10px}
+.spk{
+  border:1px solid var(--line);background:var(--soft);color:var(--accent);
+  border-radius:50%;width:42px;height:42px;font-size:1.15rem;cursor:pointer;
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:0
+}
+.spk:active{transform:scale(.94)}
+.spk.small{width:30px;height:30px;font-size:.9rem;border-radius:8px;display:inline-flex;margin-inline-start:6px}
+.spk.inline{vertical-align:middle}
+.fb .spk.small{margin-inline-start:8px}
+.hintbox{
+  display:none;margin-top:10px;background:var(--soft);border:1px dashed var(--line);
+  border-radius:12px;padding:10px 12px;text-align:center
+}
+.hintbox.on{display:block}
+.hintbox .mask{
+  font-size:1.5rem;font-weight:800;letter-spacing:.22em;word-break:break-word
+}
+.hintbox .mask.ltr{direction:ltr}
+.hintbox .n{font-size:.78rem;color:var(--muted);margin-top:4px}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.actions .btn{width:100%}
+.btn.help{background:#f59e0b;color:#1b1206}
+.tag.warn{background:var(--bad-bg);color:var(--bad);border-color:transparent}
+
+@media (max-width:540px){
+  .wrap{padding:12px 11px 46px}
+  header h1{font-size:1.15rem}
+  header p{font-size:.84rem}
+  .card{padding:13px;border-radius:14px}
+  .tabs button{font-size:.9rem;padding:11px 4px}
+  .btn{padding:13px 14px;font-size:1rem}
+  .seg{width:100%}
+  .seg button{flex:1;font-size:.78rem;padding:9px 4px}
+  .groups{grid-template-columns:repeat(2,1fr);gap:8px}
+  .q .word{font-size:1.8rem}
+  #answer{font-size:1.15rem;padding:15px}
+  th,td{font-size:.88rem;padding:7px 4px}
+  textarea{min-height:200px;font-size:.95rem}
+}
+@media (max-width:360px){ .q .word{font-size:1.55rem} }
+.status{font-size:.8rem;color:var(--muted);margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>حافظة الكلمات — إنكليزي / عربي</h1>
+    <p>كل كلمة تُحفظ بلغتيها معاً، ويُسأل عنها في الاتجاهين. الأستاذ يُدخلها مرّة واحدة فتُحفظ تلقائياً، والطالب يتدرّب بمجموعات من 10 كلمات.</p>
+  </header>
+
+  <div class="tabs">
+    <button id="tabStudy" class="on">التدريب</button>
+    <button id="tabAdmin">إدارة الكلمات</button>
+  </div>
+
+  <!-- ======= التدريب ======= -->
+  <section id="study">
+    <div class="card" id="setup">
+      <h2>اختر المجموعة</h2>
+      <div class="row" style="margin-bottom:6px">
+        <span class="hint" style="margin:0">اتجاه الاختبار:</span>
+        <div class="seg" id="dirSeg">
+          <button data-d="en2ar" class="on">إنكليزي ← عربي</button>
+          <button data-d="ar2en">عربي ← إنكليزي</button>
+          <button data-d="mix">مُختلط</button>
+        </div>
+      </div>
+      <p class="hint" id="countInfo">لا توجد كلمات بعد.</p>
+      <div class="groups" id="groupList"></div>
+    </div>
+
+    <div class="card hide" id="quiz">
+      <div class="meta">
+        <span id="qMeta"></span>
+        <span id="qScore"></span>
+      </div>
+      <div class="prog"><i id="qBar"></i></div>
+      <div class="q">
+        <div class="lbl" id="qLbl"></div>
+        <div class="wordRow">
+          <div class="word" id="qWord"></div>
+          <button class="spk hide" id="qSpk" title="استمع للنطق" aria-label="استمع للنطق">🔊</button>
+        </div>
+      </div>
+      <input type="text" id="answer" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="اكتب الإجابة هنا…">
+      <div class="fb" id="fb"></div>
+      <div class="hintbox" id="hintBox"></div>
+      <div class="actions">
+        <button class="btn" id="btnCheck">تحقّق</button>
+        <button class="btn help" id="btnHint">💡 مساعدة</button>
+        <button class="btn ghost" id="btnSkip">تخطّي</button>
+        <button class="btn ghost" id="btnQuit">إنهاء</button>
+      </div>
+    </div>
+
+    <div class="card hide" id="result">
+      <h2 style="text-align:center">النتيجة</h2>
+      <div class="big" id="rScore"></div>
+      <p class="hint" id="rMsg" style="text-align:center;font-size:1rem;font-weight:600"></p>
+      <div id="rWrong"></div>
+
+      <div class="askbox" id="askBox">
+        <p class="ask-q">هل تريد إعادة المجموعة من جديد؟</p>
+        <div class="row" style="justify-content:center;gap:10px">
+          <button class="btn" id="btnAgain">نعم، أعِد المجموعة</button>
+          <button class="btn ghost" id="btnResetGroup">لا، صفّر المجموعة وأنهِ</button>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px;justify-content:center">
+        <button class="btn ghost" id="btnWrongOnly">تدريب الأخطاء فقط</button>
+        <button class="btn ghost" id="btnBack">العودة للمجموعات بلا تصفير</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======= الإدارة ======= -->
+  <section id="admin" class="hide">
+
+    <!-- شاشة القفل -->
+    <div class="card" id="lock">
+      <h2 id="lockTitle">🔒 منطقة الأستاذ</h2>
+      <p class="hint" id="lockHint">أدخل كلمة المرور للدخول إلى إدارة الكلمات.</p>
+      <input type="password" id="pw1" placeholder="كلمة المرور" autocomplete="off">
+      <input type="password" id="pw2" class="hide" placeholder="تأكيد كلمة المرور" autocomplete="off" style="margin-top:8px">
+      <div class="row" style="margin-top:12px">
+        <button class="btn" id="btnUnlock">دخول</button>
+      </div>
+      <div class="status" id="lockStatus"></div>
+    </div>
+
+    <div id="adminBody" class="hide">
+    <div class="card">
+      <div class="row" style="justify-content:space-between;margin-bottom:6px">
+        <span class="tag">✅ وضع الأستاذ</span>
+        <span class="row" style="gap:6px">
+          <button class="btn ghost" id="btnChangePw" style="padding:6px 12px;font-size:.8rem">تغيير كلمة المرور</button>
+          <button class="btn ghost" id="btnLock" style="padding:6px 12px;font-size:.8rem">إقفال</button>
+        </span>
+      </div>
+      <h2>إدخال الكلمات (للأستاذ)</h2>
+      <p class="hint">
+        اكتب كل كلمة في سطر مستقل بالشكل: <b>english = العربية</b><br>
+        يمكن استعمال <code>=</code> أو <code>-</code> أو فاصلة أو <code>Tab</code> كفاصل. ولوضع أكثر من إجابة صحيحة افصل بينها بـ <code>/</code>.
+      </p>
+      <textarea id="bulk" placeholder="book = كتاب&#10;school = مدرسة&#10;car = سيارة / عربة"></textarea>
+      <div class="row" style="margin-top:12px">
+        <button class="btn" id="btnAdd">إضافة وحفظ</button>
+        <button class="btn ghost" id="btnReplace">استبدال القائمة كاملة</button>
+        <button class="btn ghost" id="btnExport">تصدير نسخة</button>
+      </div>
+      <div class="status" id="saveStatus"></div>
+    </div>
+
+    <div class="card">
+      <h2>الكلمات المحفوظة <span class="tag" id="wc">0</span></h2>
+      <div class="scroll"><table id="wordTable"><tbody></tbody></table></div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn ghost" id="btnClear" style="color:var(--bad)">حذف كل الكلمات</button>
+      </div>
+    </div>
+    </div>
+  </section>
+</div>
+
+<script>
+/* ============ الحالة ============ */
+var DB = null;
+var words = [];              // [{en, ar}]
+var progress = {};           // { "0": bestPercent }
+var dir = "en2ar";
+var session = null;
+var LS_W = "vocab_words_v1", LS_P = "vocab_progress_v1", LS_H = "vocab_pwhash_v1";
+var GROUP = 10;
+var pwHash = null;      // تجزئة كلمة المرور المحفوظة
+var unlocked = false;   // هل فُتحت منطقة الأستاذ في هذه الجلسة
+var pwMode = "enter";   // enter | set | change
+
+/* ============ النطق الصوتي ============ */
+var voicesReady = false, enVoice = null;
+function pickVoice(){
+  if(!("speechSynthesis" in window)) return;
+  var vs = speechSynthesis.getVoices();
+  if(!vs || !vs.length) return;
+  enVoice = vs.find(function(v){ return /^en/i.test(v.lang) && /US|GB/i.test(v.lang); })
+         || vs.find(function(v){ return /^en/i.test(v.lang); })
+         || null;
+  voicesReady = true;
+}
+if("speechSynthesis" in window){
+  pickVoice();
+  speechSynthesis.onvoiceschanged = pickVoice;
+}
+function speak(text){
+  if(!text || !("speechSynthesis" in window)) return;
+  try{
+    speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-US";
+    if(enVoice) u.voice = enVoice;
+    u.rate = 0.92;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+function speakBtn(text){
+  if(!("speechSynthesis" in window)) return "";
+  return '<button type="button" class="spk small js-speak" data-say="' + esc(text) + '" title="استمع للنطق">🔊</button>';
+}
+document.addEventListener("click", function(e){
+  var b = e.target.closest && e.target.closest(".js-speak");
+  if(b) speak(b.getAttribute("data-say"));
+});
+
+/* ============ أدوات ============ */
+function $(id){ return document.getElementById(id); }
+
+function stripDia(s){
+  return s.replace(/[\u064B-\u0652\u0640\u0670]/g,"");
+}
+function norm(s){
+  s = (s||"").toString().trim().toLowerCase();
+  s = stripDia(s);
+  s = s.replace(/[أإآٱ]/g,"ا").replace(/ى/g,"ي").replace(/ؤ/g,"و").replace(/ئ/g,"ي").replace(/ة/g,"ه");
+  s = s.replace(/[.,!?;:"'`’”“()\[\]{}]/g,"");
+  s = s.replace(/\s+/g," ").trim();
+  s = s.replace(/^(the|a|an|to)\s+/,"");
+  s = s.replace(/^(ال)(?=.{3,})/,"");
+  return s;
+}
+function variants(s){
+  return (s||"").split(/[\/|،,]/).map(function(x){return x.trim();}).filter(Boolean);
+}
+function isRight(input, correct){
+  var n = norm(input);
+  if(!n) return false;
+  var vs = variants(correct);
+  for(var i=0;i<vs.length;i++){ if(norm(vs[i]) === n) return true; }
+  return false;
+}
+function shuffle(a){
+  for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t; }
+  return a;
+}
+function groupCount(){ return Math.ceil(words.length/GROUP); }
+function groupWords(i){ return words.slice(i*GROUP,(i+1)*GROUP); }
+
+/* ============ التخزين ============ */
+function saveLocal(){
+  try{
+    localStorage.setItem(LS_W, JSON.stringify(words));
+    localStorage.setItem(LS_P, JSON.stringify(progress));
+  }catch(e){}
+}
+function loadLocal(){
+  try{
+    var w = JSON.parse(localStorage.getItem(LS_W) || "[]");
+    if(Array.isArray(w)) words = w;
+    var p = JSON.parse(localStorage.getItem(LS_P) || "{}");
+    if(p && typeof p === "object") progress = p;
+    var h = localStorage.getItem(LS_H);
+    if(h) pwHash = h;
+  }catch(e){}
+}
+function unwrap(snap){
+  if(!snap) return null;
+  if(typeof snap.data === "function"){ try{ return snap.data(); }catch(e){ return null; } }
+  if(snap.data && typeof snap.data === "object") return snap.data;
+  if(snap.items) return snap;
+  return null;
+}
+function setStatus(t){ var el=$("saveStatus"); if(el) el.textContent = t; }
+
+function saveAll(){
+  saveLocal();
+  renderAll();
+  if(DB){
+    setStatus("جارٍ الحفظ…");
+    Promise.resolve(DB.doc("vocab/words").set({ items: words, updatedAt: Date.now() }))
+      .then(function(){ setStatus("تم الحفظ ✓ (محفوظة للجميع)"); })
+      .catch(function(){ setStatus("تم الحفظ على هذا الجهاز فقط."); });
+  }else{
+    setStatus("تم الحفظ على هذا الجهاز ✓");
+  }
+}
+
+function boot(){
+  loadLocal();
+  renderAll();
+  if(typeof claude !== "undefined" && claude && claude.use){
+    Promise.resolve(claude.use("db")).then(function(db){
+      DB = db;
+      if(!DB) return;
+      Promise.resolve(DB.doc("vocab/settings").get()).then(function(s){
+        var d = unwrap(s);
+        if(d && d.pwHash){
+          pwHash = d.pwHash;
+          try{ localStorage.setItem(LS_H, pwHash); }catch(e){}
+          if(!$("admin").classList.contains("hide")) renderLock();
+        }
+      }).catch(function(){});
+      return Promise.resolve(DB.doc("vocab/words").get()).then(function(snap){
+        var d = unwrap(snap);
+        if(d && Array.isArray(d.items) && d.items.length){
+          words = d.items;
+          saveLocal();
+          renderAll();
+        }else if(words.length){
+          return DB.doc("vocab/words").set({ items: words, updatedAt: Date.now() });
+        }
+      });
+    }).catch(function(){});
+  }
+}
+
+/* ============ العرض ============ */
+function renderAll(){ renderGroups(); renderTable(); }
+
+function renderGroups(){
+  var n = groupCount(), box = $("groupList");
+  $("countInfo").textContent = words.length
+    ? "عدد الكلمات: " + words.length + " — عدد المجموعات: " + n + " (اضغط أي مجموعة للبدء، ويمكنك تخطّيها والانتقال لغيرها)"
+    : "لا توجد كلمات بعد. انتقل إلى تبويب «إدارة الكلمات» لإدخالها.";
+  box.innerHTML = "";
+  for(var i=0;i<n;i++){
+    (function(i){
+      var g = groupWords(i);
+      var pct = progress[i] || 0;
+      var b = document.createElement("button");
+      b.className = "g";
+      b.innerHTML = '<div class="t">المجموعة ' + (i+1) + '</div>' +
+                    '<div class="s">' + g.length + ' كلمة · ' + pct + '%</div>' +
+                    '<div class="bar"><i style="width:' + pct + '%"></i></div>';
+      b.onclick = function(){ startQuiz(i, g); };
+      box.appendChild(b);
+    })(i);
+  }
+}
+
+function renderTable(){
+  var tb = $("wordTable").getElementsByTagName("tbody")[0];
+  $("wc").textContent = words.length;
+  tb.innerHTML = "";
+  for(var i=0;i<words.length;i++){
+    (function(i){
+      var w = words[i];
+      var tr = document.createElement("tr");
+      tr.innerHTML = '<td style="width:34px;color:var(--muted)">' + (i+1) + '</td>' +
+                     '<td class="en">' + esc(w.en) + speakBtn(w.en) + '</td>' +
+                     '<td>' + esc(w.ar) + '</td>';
+      var td = document.createElement("td");
+      td.style.width = "34px";
+      var del = document.createElement("button");
+      del.className = "mini"; del.textContent = "✕"; del.title = "حذف";
+      del.onclick = function(){ words.splice(i,1); saveAll(); };
+      td.appendChild(del); tr.appendChild(td); tb.appendChild(tr);
+    })(i);
+  }
+}
+function esc(s){ return (s||"").replace(/[<>&]/g, function(c){ return {"<":"&lt;",">":"&gt;","&":"&amp;"}[c]; }); }
+
+/* ============ الاختبار ============ */
+function startQuiz(gi, list){
+  var items = shuffle(list.slice());
+  session = { gi: gi, items: items, i: 0, right: 0, wrong: [], helped: [], hints: 0, answered: false, source: list };
+  $("setup").classList.add("hide");
+  $("result").classList.add("hide");
+  $("quiz").classList.remove("hide");
+  showQuestion();
+}
+
+function curDir(){
+  if(dir === "mix") return Math.random() < 0.5 ? "en2ar" : "ar2en";
+  return dir;
+}
+
+function showQuestion(){
+  var s = session;
+  if(s.i >= s.items.length){ finish(); return; }
+  var it = s.items[s.i];
+  if(!it._d) it._d = curDir();
+  var e2a = it._d === "en2ar";
+
+  $("qMeta").textContent = "المجموعة " + (s.gi === -1 ? "الأخطاء" : (s.gi+1)) + " — سؤال " + (s.i+1) + " من " + s.items.length;
+  $("qScore").textContent = "صحيح: " + s.right;
+  $("qBar").style.width = (s.i / s.items.length * 100) + "%";
+  $("qLbl").textContent = e2a ? "اكتب المعنى بالعربية" : "اكتب الكلمة بالإنكليزية";
+  var w = $("qWord");
+  w.textContent = e2a ? it.en : it.ar;
+  w.className = "word" + (e2a ? " en" : "");
+
+  var qs = $("qSpk");
+  if(e2a){
+    qs.classList.remove("hide");
+    qs.onclick = function(){ speak(it.en); };
+    speak(it.en);
+  }else{
+    qs.classList.add("hide");
+    qs.onclick = null;
+  }
+
+  var a = $("answer");
+  a.value = "";
+  a.className = e2a ? "" : "ltr";
+  a.placeholder = e2a ? "الإجابة بالعربية…" : "Answer in English…";
+  a.disabled = false;
+  a.focus();
+  $("fb").className = "fb";
+  $("hintBox").className = "hintbox";
+  $("hintBox").innerHTML = "";
+  $("btnHint").disabled = false;
+  s.hints = 0;
+  $("btnCheck").textContent = "تحقّق";
+  s.answered = false;
+}
+
+function maskAnswer(correct, n){
+  var target = variants(correct)[0] || correct;
+  var out = "";
+  var shown = 0;
+  for(var i=0;i<target.length;i++){
+    var ch = target.charAt(i);
+    if(ch === " "){ out += "  "; continue; }
+    if(shown < n){ out += ch; shown++; }
+    else out += "•";
+  }
+  return out;
+}
+
+function showHint(){
+  var s = session;
+  if(!s || s.answered) return;
+  var it = s.items[s.i];
+  var e2a = it._d === "en2ar";
+  var correct = e2a ? it.ar : it.en;
+  var target = variants(correct)[0] || correct;
+  var letters = target.replace(/\s/g,"").length;
+
+  s.hints++;
+  if(s.hints >= letters){
+    // كُشفت الكلمة كاملة → تُحتسب خطأ
+    s.hints = letters;
+    markAnswer(false, correct, e2a, true);
+    return;
+  }
+  var hb = $("hintBox");
+  hb.className = "hintbox on";
+  hb.innerHTML = '<div class="mask' + (e2a ? '' : ' ltr') + '">' + esc(maskAnswer(correct, s.hints)) + '</div>' +
+                 '<div class="n">مساعدة ' + s.hints + ' — عدد الأحرف: ' + letters + ' · الإجابة بمساعدة تُسجَّل للمراجعة</div>';
+  $("answer").focus();
+}
+
+var PRAISE = ["إجابة صحيحة ✓ أحسنت!", "✓ ممتاز، استمر!", "✓ رائع، إجابة سليمة!", "✓ صحيح، أنت تتقدّم جيداً!", "✓ أحسنت، واصل هكذا!"];
+
+function markAnswer(ok, correct, e2a, revealed){
+  var s = session, fb = $("fb"), it = s.items[s.i];
+  var enWord = e2a ? null : (variants(correct)[0] || correct); // الإجابة الإنكليزية إن وُجدت
+  var sb = enWord ? speakBtn(enWord) : "";
+  if(ok){
+    s.right++;
+    if(s.hints > 0){
+      s.helped.push(it);
+      fb.className = "fb ok";
+      fb.innerHTML = "صحيحة ✓ — لكن بمساعدة " + s.hints + " حرف، راجعها لاحقاً." + sb;
+    }else{
+      fb.className = "fb ok";
+      fb.innerHTML = PRAISE[Math.floor(Math.random()*PRAISE.length)] + sb;
+    }
+  }else{
+    s.wrong.push(it);
+    fb.className = "fb bad";
+    fb.innerHTML = (revealed ? "كُشفت الكلمة كاملة — تُحتسب خطأ ✕" : "خطأ ✕") +
+      ' — الإجابة الصحيحة: <span class="c"' + (e2a ? ' dir="rtl"' : '') + '>' + esc(correct) + '</span>' + sb;
+  }
+  if(enWord) speak(enWord);
+  s.answered = true;
+  $("qScore").textContent = "صحيح: " + s.right;
+  $("btnCheck").textContent = "التالي ←";
+  $("answer").disabled = true;
+  $("btnHint").disabled = true;
+  $("hintBox").className = "hintbox";
+  $("btnCheck").focus();
+}
+
+function check(){
+  var s = session;
+  if(s.answered){ s.i++; showQuestion(); return; }
+  var it = s.items[s.i];
+  var e2a = it._d === "en2ar";
+  var correct = e2a ? it.ar : it.en;
+  var val = $("answer").value;
+  if(!val.trim()) return;
+  markAnswer(isRight(val, correct), correct, e2a, false);
+}
+
+function skip(){
+  var s = session;
+  if(!s.answered) s.wrong.push(s.items[s.i]);
+  s.i++;
+  showQuestion();
+}
+
+function encourage(pct, right, total){
+  if(pct === 100) return "🏆 ممتاز جداً! أتقنت كل كلمات هذه المجموعة بلا أي خطأ!";
+  if(pct >= 90)   return "🌟 رائع! أداء قوي جداً، بقيت خطوة صغيرة نحو الإتقان الكامل.";
+  if(pct >= 75)   return "👏 أحسنت! نتيجة جيدة جداً، راجع الكلمات القليلة الباقية وستُتقنها.";
+  if(pct >= 60)   return "👍 لا بأس، بداية جيدة. راجع الأخطاء وأعد المحاولة لتتحسّن أكثر.";
+  if(pct >= 40)   return "💪 تحتاج بعض المراجعة، لكنك في الطريق الصحيح. حاول مرة أخرى.";
+  return "📖 يبدو أن هذه المجموعة تحتاج مراجعة من البداية — لا بأس، كرّر التدريب وستتحسّن.";
+}
+
+function finish(){
+  var s = session;
+  var total = s.items.length;
+  var pct = total ? Math.round(s.right / total * 100) : 0;
+  if(s.gi >= 0){
+    if(pct > (progress[s.gi] || 0)){ progress[s.gi] = pct; saveLocal(); }
+  }
+  $("quiz").classList.add("hide");
+  $("result").classList.remove("hide");
+  $("rScore").textContent = s.right + " / " + total + "  (" + pct + "%)";
+  $("rMsg").textContent = encourage(pct, s.right, total);
+
+  var box = $("rWrong");
+  var review = s.wrong.concat(s.helped);
+  if(review.length){
+    var h = "";
+    if(s.wrong.length){
+      h += '<p class="hint" style="margin-top:14px">الكلمات التي أخطأت فيها:</p><div class="scroll"><table><tbody>';
+      for(var i=0;i<s.wrong.length;i++){
+        h += '<tr><td class="en">' + esc(s.wrong[i].en) + speakBtn(s.wrong[i].en) + '</td><td>' + esc(s.wrong[i].ar) + '</td></tr>';
+      }
+      h += '</tbody></table></div>';
+    }
+    if(s.helped.length){
+      h += '<p class="hint" style="margin-top:14px">أجبت عنها بمساعدة (تحتاج مراجعة):</p><div class="scroll"><table><tbody>';
+      for(var k=0;k<s.helped.length;k++){
+        h += '<tr><td class="en">' + esc(s.helped[k].en) + speakBtn(s.helped[k].en) + '</td><td>' + esc(s.helped[k].ar) + '</td></tr>';
+      }
+      h += '</tbody></table></div>';
+    }
+    box.innerHTML = h;
+    $("btnWrongOnly").classList.remove("hide");
+  }else{
+    box.innerHTML = "";
+    $("btnWrongOnly").classList.add("hide");
+  }
+  renderGroups();
+}
+
+function backToGroups(){
+  $("quiz").classList.add("hide");
+  $("result").classList.add("hide");
+  $("setup").classList.remove("hide");
+  renderGroups();
+}
+
+/* ============ تحليل الإدخال ============ */
+function parseBulk(txt){
+  var out = [], lines = (txt||"").split(/\r?\n/);
+  for(var i=0;i<lines.length;i++){
+    var line = lines[i].trim();
+    if(!line) continue;
+    var parts = line.split(/\s*[=\t:]\s*|\s+[-–—]\s+|\s*[;،]\s*/);
+    if(parts.length < 2){
+      var m = line.match(/^([A-Za-z][A-Za-z '’\-]*)\s+(.+)$/);
+      if(m) parts = [m[1], m[2]]; else continue;
+    }
+    var a = parts[0].trim(), b = parts.slice(1).join(" ").trim();
+    if(!a || !b) continue;
+    var en, ar;
+    if(/[\u0600-\u06FF]/.test(a) && !/[\u0600-\u06FF]/.test(b)){ en = b; ar = a; }
+    else { en = a; ar = b; }
+    out.push({ en: en, ar: ar });
+  }
+  return out;
+}
+
+/* ============ كلمة المرور ============ */
+function hashPw(s){
+  s = "vocab::" + (s || "");
+  if(window.crypto && crypto.subtle && crypto.subtle.digest){
+    return crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)).then(function(buf){
+      var b = new Uint8Array(buf), out = "";
+      for(var i=0;i<b.length;i++) out += b[i].toString(16).padStart(2,"0");
+      return out;
+    });
+  }
+  var h = 5381;
+  for(var i=0;i<s.length;i++){ h = ((h*33) ^ s.charCodeAt(i)) >>> 0; }
+  return Promise.resolve("f" + h.toString(16));
+}
+
+function savePwHash(h){
+  pwHash = h;
+  try{ localStorage.setItem(LS_H, h || ""); }catch(e){}
+  if(DB){
+    Promise.resolve(DB.doc("vocab/settings").set({ pwHash: h, updatedAt: Date.now() })).catch(function(){});
+  }
+}
+
+function renderLock(){
+  var has = !!pwHash;
+  if(unlocked && pwMode !== "change"){
+    $("lock").classList.add("hide");
+    $("adminBody").classList.remove("hide");
+    return;
+  }
+  $("lock").classList.remove("hide");
+  $("adminBody").classList.add("hide");
+  $("pw1").value = ""; $("pw2").value = "";
+  $("lockStatus").textContent = "";
+  if(pwMode === "change"){
+    $("lockTitle").textContent = "🔑 تغيير كلمة المرور";
+    $("lockHint").textContent = "اكتب كلمة المرور الجديدة مرتين.";
+    $("pw1").placeholder = "كلمة المرور الجديدة";
+    $("pw2").classList.remove("hide");
+    $("btnUnlock").textContent = "حفظ كلمة المرور";
+  }else if(!has){
+    pwMode = "set";
+    $("lockTitle").textContent = "🔑 تعيين كلمة مرور الأستاذ";
+    $("lockHint").textContent = "لم تُعيَّن كلمة مرور بعد. اختر كلمة مرور لحماية تبويب إدارة الكلمات من الطلاب.";
+    $("pw1").placeholder = "كلمة المرور";
+    $("pw2").classList.remove("hide");
+    $("btnUnlock").textContent = "تعيين وحفظ";
+  }else{
+    pwMode = "enter";
+    $("lockTitle").textContent = "🔒 منطقة الأستاذ";
+    $("lockHint").textContent = "أدخل كلمة المرور للدخول إلى إدارة الكلمات.";
+    $("pw1").placeholder = "كلمة المرور";
+    $("pw2").classList.add("hide");
+    $("btnUnlock").textContent = "دخول";
+  }
+  setTimeout(function(){ $("pw1").focus(); }, 50);
+}
+
+function submitPw(){
+  var a = $("pw1").value, b = $("pw2").value;
+  if(pwMode === "set" || pwMode === "change"){
+    if(a.length < 4){ $("lockStatus").textContent = "كلمة المرور قصيرة جداً (4 أحرف على الأقل)."; return; }
+    if(a !== b){ $("lockStatus").textContent = "كلمتا المرور غير متطابقتين."; return; }
+    hashPw(a).then(function(h){
+      savePwHash(h);
+      unlocked = true; pwMode = "enter";
+      renderLock();
+      setStatus("تم حفظ كلمة المرور ✓");
+    });
+  }else{
+    hashPw(a).then(function(h){
+      if(h === pwHash){ unlocked = true; renderLock(); }
+      else{ $("lockStatus").textContent = "كلمة المرور غير صحيحة."; $("pw1").value = ""; $("pw1").focus(); }
+    });
+  }
+}
+
+/* ============ الأحداث ============ */
+$("btnUnlock").onclick = submitPw;
+$("pw1").addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); if($("pw2").classList.contains("hide")) submitPw(); else $("pw2").focus(); } });
+$("pw2").addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); submitPw(); } });
+$("btnLock").onclick = function(){ unlocked = false; pwMode = "enter"; renderLock(); };
+$("btnChangePw").onclick = function(){ pwMode = "change"; renderLock(); };
+$("tabStudy").onclick = function(){
+  $("tabStudy").className = "on"; $("tabAdmin").className = "";
+  $("study").classList.remove("hide"); $("admin").classList.add("hide");
+};
+$("tabAdmin").onclick = function(){
+  $("tabAdmin").className = "on"; $("tabStudy").className = "";
+  $("admin").classList.remove("hide"); $("study").classList.add("hide");
+  renderLock();
+};
+
+var segBtns = $("dirSeg").getElementsByTagName("button");
+for(var i=0;i<segBtns.length;i++){
+  (function(b){
+    b.onclick = function(){
+      for(var j=0;j<segBtns.length;j++) segBtns[j].className = "";
+      b.className = "on"; dir = b.getAttribute("data-d");
+    };
+  })(segBtns[i]);
+}
+
+$("btnCheck").onclick = check;
+$("btnHint").onclick = showHint;
+$("btnSkip").onclick = skip;
+$("btnQuit").onclick = backToGroups;
+$("btnBack").onclick = backToGroups;
+$("btnAgain").onclick = function(){ startQuiz(session.gi, session.source); };
+$("btnResetGroup").onclick = function(){
+  if(session && session.gi >= 0){
+    delete progress[session.gi];
+    saveLocal();
+  }
+  backToGroups();
+};
+$("btnWrongOnly").onclick = function(){
+  var w = session.wrong.concat(session.helped);
+  var seen = {}, u = [];
+  for(var i=0;i<w.length;i++){
+    var key = w[i].en + "|" + w[i].ar;
+    if(seen[key]) continue;
+    seen[key] = 1; delete w[i]._d; u.push(w[i]);
+  }
+  startQuiz(-1, u);
+};
+$("answer").addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); check(); } });
+document.addEventListener("keydown", function(e){
+  if(e.key === "Enter" && session && session.answered && !$("quiz").classList.contains("hide")){
+    e.preventDefault(); check();
+  }
+});
+
+$("btnAdd").onclick = function(){
+  var n = parseBulk($("bulk").value);
+  if(!n.length){ setStatus("لم يتم التعرّف على أي كلمة. تأكد من الصيغة: english = العربية"); return; }
+  for(var i=0;i<n.length;i++){
+    var dup = false;
+    for(var j=0;j<words.length;j++){ if(norm(words[j].en) === norm(n[i].en)){ words[j].ar = n[i].ar; dup = true; break; } }
+    if(!dup) words.push(n[i]);
+  }
+  $("bulk").value = "";
+  saveAll();
+  setStatus("تمت إضافة/تحديث " + n.length + " كلمة. المجموع: " + words.length);
+};
+$("btnReplace").onclick = function(){
+  var n = parseBulk($("bulk").value);
+  if(!n.length){ setStatus("لا توجد كلمات صالحة في المربع."); return; }
+  if(!confirm("سيتم حذف القائمة الحالية واستبدالها بـ " + n.length + " كلمة. هل تريد المتابعة؟")) return;
+  words = n; progress = {}; $("bulk").value = "";
+  saveAll();
+};
+$("btnClear").onclick = function(){
+  if(!confirm("هل تريد حذف كل الكلمات نهائياً؟")) return;
+  words = []; progress = {};
+  saveAll();
+};
+$("btnExport").onclick = function(){
+  var txt = words.map(function(w){ return w.en + " = " + w.ar; }).join("\n");
+  $("bulk").value = txt;
+  setStatus("تم عرض نسخة نصية من كل الكلمات في المربع — انسخها واحتفظ بها.");
+};
+
+boot();
+</script>
+</body>
+</html>
