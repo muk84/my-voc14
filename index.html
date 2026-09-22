@@ -91,6 +91,7 @@ input[type=text]:focus,input[type=password]:focus,textarea:focus{border-color:va
 .prog{height:6px;background:var(--soft);border-radius:4px;overflow:hidden;margin-bottom:10px}
 .prog i{display:block;height:100%;background:var(--accent);width:0;transition:width .25s}
 table{width:100%;border-collapse:collapse;font-size:.92rem}
+th{color:var(--muted);font-weight:600;font-size:.8rem}
 th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right}
 td.en{direction:ltr;text-align:left}
 .scroll{overflow-x:auto}
@@ -232,7 +233,7 @@ td.en{direction:ltr;text-align:left}
     </div>
 
     <div id="adminBody" class="hide">
-    <div class="card">
+    <div class="card" id="cloudCard">
       <div class="row" style="justify-content:space-between;margin-bottom:6px">
         <span class="tag">✅ وضع الأستاذ</span>
         <span class="row" style="gap:6px">
@@ -240,6 +241,10 @@ td.en{direction:ltr;text-align:left}
           <button class="btn ghost" id="btnLock" style="padding:6px 12px;font-size:.8rem">إقفال</button>
         </span>
       </div>
+      <p class="hint" id="cloudStatus" style="margin:0"></p>
+    </div>
+
+    <div class="card">
       <h2>إدخال الكلمات (للأستاذ)</h2>
       <p class="hint">
         اكتب كل كلمة في سطر مستقل بالشكل: <b>english = العربية</b><br>
@@ -261,13 +266,39 @@ td.en{direction:ltr;text-align:left}
         <button class="btn ghost" id="btnClear" style="color:var(--bad)">حذف كل الكلمات</button>
       </div>
     </div>
+
+    <div class="card" id="studentsCard">
+      <h2>تقدّم الطلاب <span class="tag" id="stc">0</span></h2>
+      <p class="hint" id="studentsHint">تحتاج تفعيل السحابة لرؤية تقدّم الطلاب هنا.</p>
+      <div class="scroll"><table id="studentsTable"><thead><tr><th>الاسم</th><th>المجموعات المكتملة</th><th>المعدل</th><th>آخر نشاط</th></tr></thead><tbody></tbody></table></div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn ghost" id="btnRefreshStudents">تحديث القائمة</button>
+      </div>
+    </div>
     </div>
   </section>
 </div>
 
+<!-- ============ Firebase (اختياري - للمزامنة السحابية بين جميع الأجهزة) ============ -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
 <script>
 /* ============ الحالة ============ */
-var DB = null;
+
+/* ⚠️ إعداد Firebase — عدِّل القيم بين علامتي التنصيص بإعدادات مشروعك من Firebase Console.
+   إذا تركتها فارغة (كما هي الآن) سيعمل البرنامج محلياً فقط على كل جهاز بلا مزامنة. */
+var FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAfMg_jYFoICCFcg5CRRzQZAkZNEl1J-_M",
+  authDomain: "vocab-app-a5487.firebaseapp.com",
+  projectId: "vocab-app-a5487",
+  storageBucket: "vocab-app-a5487.firebasestorage.app",
+  messagingSenderId: "656437916506",
+  appId: "1:656437916506:web:6aefcbbe5323fc71b2f963"
+};
+
+var DB = null;              // مرجع Firestore عند تفعيل السحابة
+var cloudOn = false;        // هل السحابة مفعّلة وتعمل فعلياً
 var words = [];              // [{en, ar}]
 var progress = {};           // { "0": bestPercent }
 var dir = "en2ar";
@@ -277,6 +308,8 @@ var GROUP = 10;
 var pwHash = null;      // تجزئة كلمة المرور المحفوظة
 var unlocked = false;   // هل فُتحت منطقة الأستاذ في هذه الجلسة
 var pwMode = "enter";   // enter | set | change
+var LS_SID = "vocab_student_id", LS_SNAME = "vocab_student_name";
+var studentId = null, studentName = null;
 
 /* ============ النطق الصوتي ============ */
 var voicesReady = false, enVoice = null;
@@ -375,23 +408,106 @@ function setStatus(t){ var el=$("saveStatus"); if(el) el.textContent = t; }
 function saveAll(){
   saveLocal();
   renderAll();
-  if(DB){
-    setStatus("جارٍ الحفظ…");
+  if(cloudOn && DB){
+    setStatus("جارٍ الحفظ للجميع…");
     Promise.resolve(DB.doc("vocab/words").set({ items: words, updatedAt: Date.now() }))
-      .then(function(){ setStatus("تم الحفظ ✓ (محفوظة للجميع)"); })
-      .catch(function(){ setStatus("تم الحفظ على هذا الجهاز فقط."); });
+      .then(function(){ setStatus("تم الحفظ ✓ — سيصل تلقائياً لكل الطلاب"); })
+      .catch(function(err){ setStatus("تعذّر الحفظ السحابي (" + (err && err.message || "خطأ") + ") — حُفظ محلياً فقط."); });
   }else{
-    setStatus("تم الحفظ على هذا الجهاز ✓");
+    setStatus("تم الحفظ على هذا الجهاز فقط (السحابة غير مفعّلة).");
   }
+}
+
+function initCloud(){
+  if(!FIREBASE_CONFIG || !FIREBASE_CONFIG.apiKey || !FIREBASE_CONFIG.projectId) return; // لم يُعدّ Firebase بعد
+  if(typeof firebase === "undefined") return;
+  try{
+    firebase.initializeApp(FIREBASE_CONFIG);
+    DB = firebase.firestore();
+    cloudOn = true;
+  }catch(e){ cloudOn = false; return; }
+
+  // تحميل أولي للكلمات وكلمة المرور من السحابة
+  Promise.resolve(DB.doc("vocab/settings").get()).then(function(s){
+    var d = unwrap(s);
+    if(d && d.pwHash){
+      pwHash = d.pwHash;
+      try{ localStorage.setItem(LS_H, pwHash); }catch(e){}
+      if($("admin") && !$("admin").classList.contains("hide")) renderLock();
+    }
+  }).catch(function(){});
+
+  Promise.resolve(DB.doc("vocab/words").get()).then(function(snap){
+    var d = unwrap(snap);
+    if(d && Array.isArray(d.items) && d.items.length){
+      words = d.items; saveLocal(); renderAll();
+    }else if(words.length){
+      return DB.doc("vocab/words").set({ items: words, updatedAt: Date.now() });
+    }
+  }).catch(function(){});
+
+  // مزامنة حيّة: أي تعديل من الأستاذ يصل فوراً لكل من يفتح الصفحة
+  try{
+    DB.doc("vocab/words").onSnapshot(function(snap){
+      var d = unwrap(snap);
+      if(d && Array.isArray(d.items)){
+        words = d.items; saveLocal();
+        if(!session) renderAll(); // لا نقاطع اختباراً جارياً
+      }
+    });
+    DB.doc("vocab/settings").onSnapshot(function(snap){
+      var d = unwrap(snap);
+      if(d && d.pwHash && d.pwHash !== pwHash){
+        pwHash = d.pwHash;
+        try{ localStorage.setItem(LS_H, pwHash); }catch(e){}
+      }
+    });
+  }catch(e){}
+}
+
+/* ============ متابعة الطلاب (اختياري عند تفعيل السحابة) ============ */
+function ensureStudent(){
+  try{
+    studentId = localStorage.getItem(LS_SID);
+    if(!studentId){
+      studentId = "s" + Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+      localStorage.setItem(LS_SID, studentId);
+    }
+    studentName = localStorage.getItem(LS_SNAME);
+  }catch(e){}
+  if(!studentName){
+    var n = window.prompt("الرجاء كتابة اسمك ليتابع الأستاذ تقدّمك:", "");
+    studentName = (n && n.trim()) ? n.trim() : "طالب بلا اسم";
+    try{ localStorage.setItem(LS_SNAME, studentName); }catch(e){}
+  }
+}
+function reportProgress(){
+  if(!cloudOn || !DB) return;
+  ensureStudent();
+  Promise.resolve(DB.doc("vocab_students/" + studentId).set({
+    name: studentName, groups: progress, updatedAt: Date.now()
+  })).catch(function(){});
+}
+function loadStudents(cb){
+  if(!cloudOn || !DB) return;
+  Promise.resolve(DB.collection("vocab_students").get()).then(function(qs){
+    var list = [];
+    var docs = qs.docs || [];
+    docs.forEach(function(d){ var v = unwrap(d); if(v) list.push(v); });
+    list.sort(function(a,b){ return (b.updatedAt||0) - (a.updatedAt||0); });
+    cb(list);
+  }).catch(function(){ cb([]); });
 }
 
 function boot(){
   loadLocal();
   renderAll();
-  if(typeof claude !== "undefined" && claude && claude.use){
+  initCloud();
+  if(typeof claude !== "undefined" && claude && claude.use && !cloudOn){
     Promise.resolve(claude.use("db")).then(function(db){
       DB = db;
       if(!DB) return;
+      cloudOn = true;
       Promise.resolve(DB.doc("vocab/settings").get()).then(function(s){
         var d = unwrap(s);
         if(d && d.pwHash){
@@ -462,6 +578,7 @@ function esc(s){ return (s||"").replace(/[<>&]/g, function(c){ return {"<":"&lt;
 
 /* ============ الاختبار ============ */
 function startQuiz(gi, list){
+  if(cloudOn) ensureStudent();
   var items = shuffle(list.slice());
   session = { gi: gi, items: items, i: 0, right: 0, wrong: [], helped: [], hints: 0, answered: false, source: list };
   $("setup").classList.add("hide");
@@ -616,6 +733,7 @@ function finish(){
   var pct = total ? Math.round(s.right / total * 100) : 0;
   if(s.gi >= 0){
     if(pct > (progress[s.gi] || 0)){ progress[s.gi] = pct; saveLocal(); }
+    reportProgress();
   }
   $("quiz").classList.add("hide");
   $("result").classList.remove("hide");
@@ -705,6 +823,8 @@ function renderLock(){
   if(unlocked && pwMode !== "change"){
     $("lock").classList.add("hide");
     $("adminBody").classList.remove("hide");
+    renderCloudStatus();
+    refreshStudents();
     return;
   }
   $("lock").classList.remove("hide");
@@ -754,12 +874,53 @@ function submitPw(){
   }
 }
 
+function renderCloudStatus(){
+  var el = $("cloudStatus");
+  if(!el) return;
+  el.textContent = cloudOn
+    ? "☁️ السحابة مفعّلة — أي تعديل تحفظه هنا يصل تلقائياً لكل الطلاب على أي جهاز."
+    : "⚪ السحابة غير مفعّلة — الكلمات محفوظة على هذا الجهاز فقط. راجع FIREBASE_CONFIG داخل الملف لتفعيلها.";
+}
+function fmtWhen(ts){
+  if(!ts) return "—";
+  try{ return new Date(ts).toLocaleString("ar"); }catch(e){ return "—"; }
+}
+function refreshStudents(){
+  var hint = $("studentsHint");
+  if(!cloudOn){
+    hint.textContent = "تحتاج تفعيل السحابة لرؤية تقدّم الطلاب هنا.";
+    $("stc").textContent = "0";
+    $("studentsTable").getElementsByTagName("tbody")[0].innerHTML = "";
+    return;
+  }
+  hint.textContent = "جارٍ التحميل…";
+  loadStudents(function(list){
+    $("stc").textContent = list.length;
+    hint.textContent = list.length ? "آخر تحديث لكل طالب:" : "لا يوجد طلاب سجّلوا نتائج بعد.";
+    var tb = $("studentsTable").getElementsByTagName("tbody")[0];
+    tb.innerHTML = "";
+    for(var i=0;i<list.length;i++){
+      var st = list[i];
+      var groups = st.groups || {};
+      var keys = Object.keys(groups).sort(function(a,b){ return (+a)-(+b); });
+      var avg = keys.length ? Math.round(keys.reduce(function(s,k){ return s+groups[k]; },0)/keys.length) : 0;
+      var tr = document.createElement("tr");
+      tr.innerHTML = '<td>' + esc(st.name||"—") + '</td>' +
+                     '<td>' + keys.length + ' مجموعة</td>' +
+                     '<td>' + avg + '%</td>' +
+                     '<td style="font-size:.78rem;color:var(--muted)">' + esc(fmtWhen(st.updatedAt)) + '</td>';
+      tb.appendChild(tr);
+    }
+  });
+}
+
 /* ============ الأحداث ============ */
 $("btnUnlock").onclick = submitPw;
 $("pw1").addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); if($("pw2").classList.contains("hide")) submitPw(); else $("pw2").focus(); } });
 $("pw2").addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); submitPw(); } });
 $("btnLock").onclick = function(){ unlocked = false; pwMode = "enter"; renderLock(); };
 $("btnChangePw").onclick = function(){ pwMode = "change"; renderLock(); };
+$("btnRefreshStudents").onclick = refreshStudents;
 $("tabStudy").onclick = function(){
   $("tabStudy").className = "on"; $("tabAdmin").className = "";
   $("study").classList.remove("hide"); $("admin").classList.add("hide");
