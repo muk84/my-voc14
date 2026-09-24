@@ -72,7 +72,7 @@ input[type=text]:focus,input[type=password]:focus,textarea:focus,select:focus{bo
   font-size:.85rem;padding:7px 12px;border-radius:9px;cursor:pointer}
 .seg button.on{background:var(--card);color:var(--ink)}
 .groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:9px;margin-top:12px}
-.groups.stages{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
+.groups.wide{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
 .g{
   border:1px solid var(--line);background:var(--bg);border-radius:13px;padding:11px 8px;
   cursor:pointer;text-align:center;font-family:inherit;color:var(--ink)
@@ -86,9 +86,8 @@ input[type=text]:focus,input[type=password]:focus,textarea:focus,select:focus{bo
 .crumb .path{color:var(--muted);font-size:.85rem}
 .crumb .path b{color:var(--ink)}
 .backBtn{
-  border:1px solid var(--accent);background:var(--soft);color:var(--accent);border-radius:10px;
-  padding:10px 16px;font-family:inherit;font-size:.88rem;cursor:pointer;font-weight:700;
-  display:inline-flex;align-items:center;gap:6px
+  border:1px solid var(--line);background:var(--soft);color:var(--ink);border-radius:10px;
+  padding:6px 12px;font-family:inherit;font-size:.82rem;cursor:pointer;font-weight:600
 }
 .q{text-align:center;padding:14px 4px 6px}
 .q .lbl{font-size:.8rem;color:var(--muted);letter-spacing:.5px}
@@ -161,7 +160,7 @@ td.en{direction:ltr;text-align:left}
 <div class="wrap">
   <header>
     <h1>حافظة الكلمات — إنكليزي / عربي</h1>
-    <p>كل كلمة تُحفظ بلغتيها معاً، مقسّمة حسب المرحلة الدراسية والوحدة، ويُسأل عنها في الاتجاهين. الأستاذ يُدخلها مرّة واحدة فتصل تلقائياً لكل الطلاب.</p>
+    <p>كل معلّم له طلابه وكلماته الخاصة، لا يراها أحد سواه والمسؤول. الطالب يختار معلّمه مرة واحدة، ويتدرّب على كلماته فقط.</p>
   </header>
 
   <div class="tabs">
@@ -172,29 +171,35 @@ td.en{direction:ltr;text-align:left}
   <!-- ======= التدريب ======= -->
   <section id="study">
 
-    <!-- 1) اختيار المرحلة -->
-    <div class="card" id="stageSetup">
-      <h2>اختر المرحلة الدراسية</h2>
-      <p class="hint" id="stageInfo"></p>
-      <div class="groups stages" id="stageList"></div>
+    <!-- 0) تعريف الطالب: الاسم + اختيار المعلّم -->
+    <div class="card" id="studentSetup">
+      <h2>مرحباً بك 👋</h2>
+      <p class="hint">اكتب اسمك واختر اسم معلّمك لتبدأ التدريب على كلماته فقط.</p>
+      <input type="text" id="studentNameInput" placeholder="اسمك">
+      <p class="hint" id="teacherPickInfo" style="margin-top:12px">اختر معلّمك:</p>
+      <div class="groups wide" id="teacherPickList"></div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn" id="btnStartAsStudent">بدء التدريب</button>
+      </div>
+      <div class="status" id="studentSetupStatus"></div>
     </div>
 
-    <!-- 2) اختيار الوحدة -->
+    <!-- 1) اختيار الوحدة -->
     <div class="card hide" id="unitSetup">
       <div class="crumb">
-        <button type="button" class="backBtn" id="btnBackToStages" data-nav="stages">🔙 رجوع لاختيار المرحلة</button>
-        <span class="path">المرحلة: <b id="crumbStage"></b></span>
+        <button type="button" class="backBtn" id="btnChangeTeacher" data-nav="teacher">🔁 تغيير المعلّم</button>
+        <span class="path">الطالب: <b id="crumbName"></b> — المعلّم: <b id="crumbTeacher"></b></span>
       </div>
       <h2>اختر الوحدة</h2>
       <p class="hint" id="unitInfo"></p>
       <div class="groups" id="unitList"></div>
     </div>
 
-    <!-- 3) اختيار المجموعة -->
+    <!-- 2) اختيار المجموعة -->
     <div class="card hide" id="groupSetup">
       <div class="crumb">
-        <button type="button" class="backBtn" id="btnBackToUnits" data-nav="units">🔙 رجوع لاختيار الوحدة</button>
-        <span class="path">المرحلة: <b id="crumbStage2"></b> — الوحدة: <b id="crumbUnit"></b></span>
+        <button type="button" class="backBtn" id="btnBackToUnits" data-nav="units">🔙 رجوع للوحدات</button>
+        <span class="path">الوحدة: <b id="crumbUnit"></b></span>
       </div>
       <h2>اختر المجموعة</h2>
       <div class="row" style="margin-bottom:6px">
@@ -257,13 +262,13 @@ td.en{direction:ltr;text-align:left}
   <section id="admin" class="hide">
 
     <div class="card" id="lock">
-      <h2 id="lockTitle">🔒 منطقة الأستاذ</h2>
-      <p class="hint" id="lockHint">أدخل كلمة المرور للدخول إلى إدارة الكلمات.</p>
+      <h2 id="lockTitle">🔒 منطقة المعلّمين</h2>
+      <p class="hint" id="lockHint"></p>
       <div class="seg hide" id="loginRoleSeg" style="margin-bottom:12px">
         <button type="button" data-role="super" class="on">أنا المسؤول الرئيسي</button>
-        <button type="button" data-role="teacher">أنا معلّم مساعد</button>
+        <button type="button" data-role="teacher">أنا معلّم</button>
       </div>
-      <input type="text" id="loginUser" class="hide" placeholder="اسم المستخدم الذي أعطاك المسؤول" autocomplete="off" style="margin-bottom:8px">
+      <input type="text" id="loginUser" class="hide" placeholder="اسم المستخدم" autocomplete="off" style="margin-bottom:8px">
       <input type="password" id="pw1" placeholder="كلمة المرور" autocomplete="off">
       <input type="password" id="pw2" class="hide" placeholder="تأكيد كلمة المرور" autocomplete="off" style="margin-top:8px">
       <div class="row" style="margin-top:12px">
@@ -275,45 +280,44 @@ td.en{direction:ltr;text-align:left}
     <div id="adminBody" class="hide">
     <div class="card" id="cloudCard">
       <div class="row" style="justify-content:space-between;margin-bottom:6px">
-        <span class="tag" id="roleTag">✅ وضع الأستاذ</span>
+        <span class="tag" id="roleTag">✅</span>
         <span class="row" style="gap:6px">
           <button class="btn ghost" id="btnChangePw" style="padding:6px 12px;font-size:.8rem">تغيير كلمة مروري</button>
-          <button class="btn ghost" id="btnLock" style="padding:6px 12px;font-size:.8rem">تسجيل خروج</button>
+          <button class="btn ghost" id="btnLock" style="padding:6px 12px;font-size:.8rem">إقفال</button>
         </span>
       </div>
       <p class="hint" id="cloudStatus" style="margin:0"></p>
     </div>
 
-    <div class="card hide" id="teacherAcctCard">
-      <h2>👤 حساب المعلم المساعد</h2>
-      <p class="hint">أنشئ اسم مستخدم وكلمة مرور خاصة تعطيها لمعلم آخر، وحدّد له مرحلة واحدة فقط يعمل عليها — سيرى ويضيف كلمات هذه المرحلة فقط، ولن يرى شيئاً من مراحل أخرى. تبقى أنت المسؤول الوحيد القادر على رؤية كل شيء وتغيير أي كلمة مرور في أي وقت.</p>
-      <p class="hint" id="teacherAcctStatus" style="margin-bottom:10px"></p>
-      <input type="text" id="teachUserInput" placeholder="اسم مستخدم المعلم المساعد" autocomplete="off" style="margin-bottom:8px">
-      <input type="password" id="teachPw1" placeholder="كلمة مرور المعلم المساعد" autocomplete="off" style="margin-bottom:8px">
-      <input type="password" id="teachPw2" placeholder="تأكيد كلمة المرور" autocomplete="off" style="margin-bottom:8px">
-      <select id="teachStageSelect" style="width:100%"></select>
-      <div class="row" style="margin-top:12px">
-        <button class="btn" id="btnSaveTeacher">حفظ / تحديث حساب المعلم</button>
-        <button class="btn ghost" id="btnDeleteTeacher" style="color:var(--bad)">✕ حذف حساب المعلم</button>
+    <!-- إدارة المعلّمين (للمسؤول فقط) -->
+    <div class="card hide" id="teachersCard">
+      <h2>👥 إدارة المعلّمين</h2>
+      <p class="hint">كل معلّم يرى فقط طلابه وكلماته. أنت وحدك ترى الجميع، وتستطيع تغيير كلمة مرور أي معلّم أو حذفه في أي وقت.</p>
+      <div class="row" style="margin-bottom:10px">
+        <input type="text" id="newTeachUser" placeholder="اسم مستخدم معلّم جديد">
+        <input type="password" id="newTeachPass" placeholder="كلمة مرور مؤقتة">
+        <input type="text" id="newTeachLabel" placeholder="تسمية اختيارية (مثلاً: السادس الابتدائي)">
+        <button class="btn" id="btnAddTeacher">إضافة معلّم</button>
       </div>
-      <div class="status" id="teacherAcctSaveStatus"></div>
+      <div class="scroll"><table id="teachersTable"><thead><tr><th>اسم المستخدم</th><th>التسمية</th><th>عدد الكلمات</th><th>أُنشئ في</th><th></th><th></th></tr></thead><tbody></tbody></table></div>
+      <div class="status" id="teachersStatus"></div>
     </div>
 
     <div class="card">
-      <h2>إدخال الكلمات (للأستاذ)</h2>
+      <h2>إدخال الكلمات</h2>
       <p class="hint">
-        اختر المرحلة والوحدة أدناه، ثم اكتب كل كلمة في سطر مستقل بالشكل: <b>english = العربية</b><br>
+        اكتب كل كلمة في سطر مستقل بالشكل: <b>english = العربية</b><br>
         يمكن استعمال <code>=</code> أو <code>-</code> أو فاصلة أو <code>Tab</code> كفاصل. ولوضع أكثر من إجابة صحيحة افصل بينها بـ <code>/</code>.
       </p>
       <div class="row" style="margin-bottom:10px">
-        <select id="scopeStage"></select>
+        <select id="scopeTeacher" class="hide"></select>
         <select id="scopeUnit"></select>
       </div>
       <textarea id="bulk" placeholder="book = كتاب&#10;school = مدرسة&#10;car = سيارة / عربة"></textarea>
       <div class="row" style="margin-top:12px">
         <button class="btn" id="btnAdd">إضافة وحفظ في هذه الوحدة</button>
         <button class="btn ghost" id="btnReplace">استبدال كلمات هذه الوحدة فقط</button>
-        <button class="btn ghost" id="btnExport">تصدير نسخة كاملة</button>
+        <button class="btn ghost" id="btnExport">تصدير نسخة</button>
       </div>
       <div class="status" id="saveStatus"></div>
     </div>
@@ -321,19 +325,19 @@ td.en{direction:ltr;text-align:left}
     <div class="card">
       <h2>الكلمات المحفوظة <span class="tag" id="wc">0</span></h2>
       <div class="row" style="margin-bottom:10px">
-        <select id="filterStage"></select>
+        <select id="filterTeacher" class="hide"></select>
         <select id="filterUnit"></select>
       </div>
-      <div class="scroll"><table id="wordTable"><thead><tr><th>المرحلة</th><th>الوحدة</th><th>English</th><th>العربية</th><th></th></tr></thead><tbody></tbody></table></div>
+      <div class="scroll"><table id="wordTable"><thead><tr><th class="hide" id="thTeacher">المعلّم</th><th>الوحدة</th><th>English</th><th>العربية</th><th></th></tr></thead><tbody></tbody></table></div>
       <div class="row" style="margin-top:12px">
-        <button class="btn ghost" id="btnClear" style="color:var(--bad)">حذف كل الكلمات (كل المراحل)</button>
+        <button class="btn ghost hide" id="btnClear" style="color:var(--bad)">حذف كل كلماتي</button>
       </div>
     </div>
 
     <div class="card" id="studentsCard">
       <h2>تقدّم الطلاب <span class="tag" id="stc">0</span></h2>
       <p class="hint" id="studentsHint">تحتاج تفعيل السحابة لرؤية تقدّم الطلاب هنا.</p>
-      <div class="scroll"><table id="studentsTable"><thead><tr><th></th><th>الاسم</th><th>المجموعات المكتملة</th><th>المعدل العام</th><th>آخر نشاط</th><th></th></tr></thead><tbody></tbody></table></div>
+      <div class="scroll"><table id="studentsTable"><thead><tr><th></th><th>الاسم</th><th class="hide" id="thStudentTeacher">المعلّم</th><th>المجموعات المكتملة</th><th>المعدل العام</th><th>آخر نشاط</th><th></th></tr></thead><tbody></tbody></table></div>
       <div class="row" style="margin-top:12px">
         <button class="btn ghost" id="btnRefreshStudents">تحديث القائمة</button>
       </div>
@@ -347,8 +351,6 @@ td.en{direction:ltr;text-align:left}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <script>
-/* ============ الحالة ============ */
-
 /* ⚠️ إعداد Firebase — عدِّل القيم بين علامتي التنصيص بإعدادات مشروعك من Firebase Console.
    إذا تركتها فارغة سيعمل البرنامج محلياً فقط على كل جهاز بلا مزامنة. */
 var FIREBASE_CONFIG = {
@@ -359,35 +361,28 @@ var FIREBASE_CONFIG = {
   messagingSenderId: "656437916506",
   appId: "1:656437916506:web:6aefcbbe5323fc71b2f963"
 };
+var UNIT_COUNT = 8; // كل معلّم يقسّم محتواه إلى 8 وحدات
 
-/* المراحل الدراسية المتاحة حالياً — يمكن للمطوّر إضافة مراحل جديدة هنا لاحقاً */
-var STAGES = [
-  { id: "g6", name: "السادس الابتدائي" },
-  { id: "m1", name: "الأول متوسط" }
-];
-var UNIT_COUNT = 8; // كل مرحلة مقسّمة إلى 8 وحدات
-
-var DB = null;              // مرجع Firestore عند تفعيل السحابة
-var cloudOn = false;        // هل السحابة مفعّلة وتعمل فعلياً
-var words = [];              // [{stage, unit, en, ar}]
-var progress = {};           // { "stageId_unit_groupIndex": bestPercent }
+/* ============ الحالة ============ */
+var DB = null, cloudOn = false;
+var words = [];        // [{teacher, unit, en, ar}]
+var progress = {};     // { "teacher_unit_idx": bestPercent }  — محلي للطالب الحالي
+var TEACHERS = [];      // [{username, label, createdAt}] — دليل المعلّمين (بلا كلمات المرور)
 var dir = "en2ar";
 var session = null;
-var curStage = null, curUnit = null; // اختيار الطالب الحالي في التدريب
-var LS_W = "vocab_words_v2", LS_P = "vocab_progress_v2", LS_H = "vocab_pwhash_v1";
+var curUnit = null;
 var GROUP = 10;
-var superHash = null;      // تجزئة كلمة مرور المسؤول الرئيسي
-var teacherUser = null;    // اسم مستخدم المعلم المساعد
-var teacherHash = null;    // تجزئة كلمة مرور المعلم المساعد
-var teacherStage = null;   // المرحلة الوحيدة المسموح للمعلم المساعد العمل عليها
+
+var superHash = null;      // كلمة مرور المسؤول الرئيسي
 var role = null;           // "super" | "teacher" | null
-var loginRole = "super";   // الدور المُختار حالياً في شاشة تسجيل الدخول
-var unlocked = false;   // هل فُتحت منطقة الأستاذ في هذه الجلسة
-var pwMode = "enter";   // enter | setSuper | changeSuper
-var LS_SUPER_H = "vocab_super_pwhash_v1", LS_TEACH_U = "vocab_teacher_user_v1", LS_TEACH_H = "vocab_teacher_pwhash_v1", LS_TEACH_STAGE = "vocab_teacher_stage_v1";
-var LS_SID = "vocab_student_id", LS_SNAME = "vocab_student_name";
-var studentId = null, studentName = null;
-var openStudentDetail = null; // اسم الطالب المفتوح تفصيله حالياً في لوحة الأستاذ
+var loginRole = "super";
+var myUsername = null;     // اسم المستخدم لمن سجّل دخوله (معلّم) أو null للمسؤول
+var pwMode = "enter";       // enter | setSuper | changeSuper
+
+var LS_W = "vocab_words_v3", LS_P = "vocab_progress_v3";
+var LS_SUPER_H = "vocab_super_pwhash_v1";
+var LS_SID = "vocab_student_id", LS_SNAME = "vocab_student_name", LS_STEACH = "vocab_student_teacher";
+var studentId = null, studentName = null, studentTeacher = null;
 
 /* ============ النطق الصوتي ============ */
 var voicesReady = false, enVoice = null;
@@ -400,18 +395,13 @@ function pickVoice(){
          || null;
   voicesReady = true;
 }
-if("speechSynthesis" in window){
-  pickVoice();
-  speechSynthesis.onvoiceschanged = pickVoice;
-}
+if("speechSynthesis" in window){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
 function speak(text){
   if(!text || !("speechSynthesis" in window)) return;
   try{
     speechSynthesis.cancel();
     var u = new SpeechSynthesisUtterance(text);
-    u.lang = "en-US";
-    if(enVoice) u.voice = enVoice;
-    u.rate = 0.92;
+    u.lang = "en-US"; if(enVoice) u.voice = enVoice; u.rate = 0.92;
     speechSynthesis.speak(u);
   }catch(e){}
 }
@@ -424,17 +414,17 @@ document.addEventListener("click", function(e){
   if(b) speak(b.getAttribute("data-say"));
 });
 
-/* ============ أدوات ============ */
+/* ============ أدوات أساسية ============ */
 function $(id){ return document.getElementById(id); }
 function esc(s){ return (s||"").toString().replace(/[<>&]/g, function(c){ return {"<":"&lt;",">":"&gt;","&":"&amp;"}[c]; }); }
 
-/* تفويض ثابت لأزرار الرجوع — يعمل بشكل مضمون بلا استثناء بغض النظر عن أي شيء آخر في الصفحة */
+/* تفويض ثابت لأزرار التنقّل — يعمل بشكل مضمون بغض النظر عن أي شيء آخر */
 document.addEventListener("click", function(e){
   var nav = e.target.closest && e.target.closest("[data-nav]");
   if(!nav) return;
   e.preventDefault();
   var to = nav.getAttribute("data-nav");
-  if(to === "stages" && typeof showStageScreen === "function") showStageScreen();
+  if(to === "teacher" && typeof showStudentSetup === "function") showStudentSetup();
   else if(to === "units" && typeof showUnitScreen === "function") showUnitScreen();
 }, true);
 
@@ -449,47 +439,32 @@ function norm(s){
   s = s.replace(/^(ال)(?=.{3,})/,"");
   return s;
 }
-function variants(s){
-  return (s||"").split(/[\/|،,]/).map(function(x){return x.trim();}).filter(Boolean);
-}
+function variants(s){ return (s||"").split(/[\/|،,]/).map(function(x){return x.trim();}).filter(Boolean); }
 function isRight(input, correct){
-  var n = norm(input);
-  if(!n) return false;
+  var n = norm(input); if(!n) return false;
   var vs = variants(correct);
   for(var i=0;i<vs.length;i++){ if(norm(vs[i]) === n) return true; }
   return false;
 }
-function shuffle(a){
-  for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t; }
-  return a;
+function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t; } return a; }
+function sanitizeUsername(u){ return (u||"").toString().trim().toLowerCase().replace(/[^a-z0-9_\-\u0600-\u06FF]/g,""); }
+function teacherLabel(username){
+  var t = TEACHERS.find(function(x){ return x.username===username; });
+  return t ? (t.label ? (t.username + " — " + t.label) : t.username) : username;
 }
-function stageName(id){ var s = STAGES.find(function(x){ return x.id===id; }); return s ? s.name : id; }
-function wordsFor(stage, unit){ return words.filter(function(w){ return w.stage===stage && (+w.unit)===(+unit); }); }
+function wordsFor(teacher, unit){ return words.filter(function(w){ return w.teacher===teacher && (+w.unit)===(+unit); }); }
 function groupCountFor(list){ return Math.ceil(list.length/GROUP); }
 function groupSlice(list, i){ return list.slice(i*GROUP, i*GROUP+GROUP); }
-function groupKey(stage, unit, idx){ return stage + "_" + unit + "_" + idx; }
-function parseGroupKey(key){
-  var p = key.split("_");
-  return { stage: p[0], unit: +p[1], idx: +p[2] };
-}
-function stageTotal(stage){
-  var list = words.filter(function(w){ return w.stage===stage; });
-  return list.length;
-}
-function unitAvg(stage, unit){
-  var keys = Object.keys(progress).filter(function(k){ var p=parseGroupKey(k); return p.stage===stage && p.unit===(+unit); });
+function groupKey(teacher, unit, idx){ return teacher + "_" + unit + "_" + idx; }
+function parseGroupKey(key){ var p = key.split("_"); return { teacher: p[0], unit: +p[1], idx: +p[2] }; }
+function teacherTotal(teacher){ return words.filter(function(w){ return w.teacher===teacher; }).length; }
+function unitAvg(teacher, unit){
+  var keys = Object.keys(progress).filter(function(k){ var p=parseGroupKey(k); return p.teacher===teacher && p.unit===(+unit); });
   if(!keys.length) return 0;
-  var sum = keys.reduce(function(s,k){ return s+progress[k]; },0);
-  return Math.round(sum/keys.length);
-}
-function stageAvg(stage){
-  var keys = Object.keys(progress).filter(function(k){ return parseGroupKey(k).stage===stage; });
-  if(!keys.length) return 0;
-  var sum = keys.reduce(function(s,k){ return s+progress[k]; },0);
-  return Math.round(sum/keys.length);
+  return Math.round(keys.reduce(function(s,k){ return s+progress[k]; },0)/keys.length);
 }
 
-/* ============ التخزين ============ */
+/* ============ التخزين المحلي ============ */
 function saveLocal(){
   try{
     localStorage.setItem(LS_W, JSON.stringify(words));
@@ -502,12 +477,10 @@ function loadLocal(){
     if(Array.isArray(w)) words = w;
     var p = JSON.parse(localStorage.getItem(LS_P) || "{}");
     if(p && typeof p === "object") progress = p;
-    var sh = localStorage.getItem(LS_SUPER_H);
-    if(!sh){ sh = localStorage.getItem(LS_H); } // ترقية من النسخة القديمة (كلمة مرور واحدة)
-    if(sh) superHash = sh;
-    var tu = localStorage.getItem(LS_TEACH_U); if(tu) teacherUser = tu;
-    var th = localStorage.getItem(LS_TEACH_H); if(th) teacherHash = th;
-    var ts = localStorage.getItem(LS_TEACH_STAGE); if(ts) teacherStage = ts;
+    var sh = localStorage.getItem(LS_SUPER_H); if(sh) superHash = sh;
+    studentId = localStorage.getItem(LS_SID) || null;
+    studentName = localStorage.getItem(LS_SNAME) || null;
+    studentTeacher = localStorage.getItem(LS_STEACH) || null;
   }catch(e){}
 }
 function unwrap(snap){
@@ -519,13 +492,13 @@ function unwrap(snap){
 }
 function setStatus(t){ var el=$("saveStatus"); if(el) el.textContent = t; }
 
-function saveAll(){
+function saveWordsAll(){
   saveLocal();
   renderAll();
   if(cloudOn && DB){
     setStatus("جارٍ الحفظ للجميع…");
     Promise.resolve(DB.doc("vocab/words").set({ items: words, updatedAt: Date.now() }))
-      .then(function(){ setStatus("تم الحفظ ✓ — سيصل تلقائياً لكل الطلاب"); })
+      .then(function(){ setStatus("تم الحفظ ✓ — سيصل تلقائياً لكل طلابك"); })
       .catch(function(err){ setStatus("تعذّر الحفظ السحابي (" + (err && err.message || "خطأ") + ") — حُفظ محلياً فقط."); });
   }else{
     setStatus("تم الحفظ على هذا الجهاز فقط (السحابة غير مفعّلة).");
@@ -534,27 +507,14 @@ function saveAll(){
 
 function applySettingsDoc(d){
   if(!d) return;
-  var sh = d.superHash || d.pwHash; // ترقية من الحقل القديم
-  if(sh && sh !== superHash){
-    superHash = sh;
-    try{ localStorage.setItem(LS_SUPER_H, superHash); }catch(e){}
+  var sh = d.superHash;
+  if(sh !== undefined && sh !== superHash){
+    superHash = sh || null;
+    try{ localStorage.setItem(LS_SUPER_H, superHash || ""); }catch(e){}
   }
-  if(d.teacherUser !== undefined && d.teacherUser !== teacherUser){
-    teacherUser = d.teacherUser || null;
-    try{ localStorage.setItem(LS_TEACH_U, teacherUser || ""); }catch(e){}
-  }
-  if(d.teacherHash !== undefined && d.teacherHash !== teacherHash){
-    teacherHash = d.teacherHash || null;
-    try{ localStorage.setItem(LS_TEACH_H, teacherHash || ""); }catch(e){}
-  }
-  if(d.teacherStage !== undefined && d.teacherStage !== teacherStage){
-    teacherStage = d.teacherStage || null;
-    try{ localStorage.setItem(LS_TEACH_STAGE, teacherStage || ""); }catch(e){}
-    if(unlocked && role === "teacher") applyRoleRestrictions();
-  }
-  if($("admin") && !$("admin").classList.contains("hide") && !unlocked) renderLock();
-  if(unlocked && role === "super") renderTeacherAcctStatus();
+  if($("admin") && !$("admin").classList.contains("hide") && !unlockedNow()) renderLock();
 }
+function unlockedNow(){ return role === "super" || role === "teacher"; }
 
 function initCloud(){
   if(!FIREBASE_CONFIG || !FIREBASE_CONFIG.apiKey || !FIREBASE_CONFIG.projectId) return;
@@ -565,18 +525,12 @@ function initCloud(){
     cloudOn = true;
   }catch(e){ cloudOn = false; return; }
 
-  Promise.resolve(DB.doc("vocab/settings").get()).then(function(s){
-    applySettingsDoc(unwrap(s));
-  }).catch(function(){});
-
+  Promise.resolve(DB.doc("vocab/settings").get()).then(function(s){ applySettingsDoc(unwrap(s)); }).catch(function(){});
   Promise.resolve(DB.doc("vocab/words").get()).then(function(snap){
     var d = unwrap(snap);
-    if(d && Array.isArray(d.items) && d.items.length){
-      words = d.items; saveLocal(); renderAll();
-    }else if(words.length){
-      return DB.doc("vocab/words").set({ items: words, updatedAt: Date.now() });
-    }
+    if(d && Array.isArray(d.items)){ words = d.items; saveLocal(); renderAll(); }
   }).catch(function(){});
+  loadTeachersDirectory(function(){ renderAll(); });
 
   try{
     DB.doc("vocab/words").onSnapshot(function(snap){
@@ -586,135 +540,131 @@ function initCloud(){
         if(!session) renderAll();
       }
     });
-    DB.doc("vocab/settings").onSnapshot(function(snap){
-      applySettingsDoc(unwrap(snap));
+    DB.doc("vocab/settings").onSnapshot(function(snap){ applySettingsDoc(unwrap(snap)); });
+    DB.collection("vocab_teachers").onSnapshot(function(){
+      loadTeachersDirectory(function(){ if(!session) renderAll(); });
     });
   }catch(e){}
 }
 
+/* ============ دليل المعلّمين ============ */
+function loadTeachersDirectory(cb){
+  if(!cloudOn || !DB){ if(cb) cb(); return; }
+  Promise.resolve(DB.collection("vocab_teachers").get()).then(function(qs){
+    var list = [];
+    (qs.docs||[]).forEach(function(d){
+      var v = unwrap(d);
+      if(v) list.push({ username: v.username, label: v.label || "", createdAt: v.createdAt || 0, _id: d.id });
+    });
+    list.sort(function(a,b){ return a.username.localeCompare(b.username); });
+    TEACHERS = list;
+    if(cb) cb();
+  }).catch(function(){ if(cb) cb(); });
+}
+
 /* ============ متابعة الطلاب ============ */
-function ensureStudent(){
-  try{
-    studentId = localStorage.getItem(LS_SID);
-    if(!studentId){
-      studentId = "s" + Date.now().toString(36) + Math.random().toString(36).slice(2,8);
-      localStorage.setItem(LS_SID, studentId);
-    }
-    studentName = localStorage.getItem(LS_SNAME);
-  }catch(e){}
-  if(!studentName){
-    var n = window.prompt("الرجاء كتابة اسمك ليتابع الأستاذ تقدّمك:", "");
-    studentName = (n && n.trim()) ? n.trim() : "طالب بلا اسم";
-    try{ localStorage.setItem(LS_SNAME, studentName); }catch(e){}
+function ensureStudentId(){
+  if(!studentId){
+    studentId = "s" + Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+    try{ localStorage.setItem(LS_SID, studentId); }catch(e){}
   }
 }
 function reportProgress(){
-  if(!cloudOn || !DB) return;
-  ensureStudent();
+  if(!cloudOn || !DB || !studentTeacher) return;
+  ensureStudentId();
   Promise.resolve(DB.doc("vocab_students/" + studentId).set({
-    name: studentName, groups: progress, updatedAt: Date.now()
+    name: studentName, teacher: studentTeacher, groups: progress, updatedAt: Date.now()
   })).catch(function(){});
 }
 function loadStudents(cb){
-  if(!cloudOn || !DB) return;
+  if(!cloudOn || !DB) return cb([]);
   Promise.resolve(DB.collection("vocab_students").get()).then(function(qs){
     var list = [];
-    var docs = qs.docs || [];
-    docs.forEach(function(d){ var v = unwrap(d); if(v){ v._id = d.id; list.push(v); } });
+    (qs.docs||[]).forEach(function(d){ var v = unwrap(d); if(v){ v._id = d.id; list.push(v); } });
     list.sort(function(a,b){ return (b.updatedAt||0) - (a.updatedAt||0); });
     cb(list);
   }).catch(function(){ cb([]); });
 }
+function deleteStudent(id, name){
+  if(role !== "super" && !(role === "teacher")) return;
+  if(!confirm("حذف الطالب \"" + (name || "بلا اسم") + "\" ونتائجه نهائياً؟")) return;
+  Promise.resolve(DB.doc("vocab_students/" + id).delete()).then(refreshStudents).catch(function(){ alert("تعذّر الحذف."); });
+}
 
 function boot(){
   loadLocal();
-  fillScopeSelectors();
   renderAll();
   initCloud();
 }
 
-/* ============ العرض: الاختيارات المنسدلة ============ */
-function fillScopeSelectors(){
-  [ $("scopeStage"), $("filterStage"), $("teachStageSelect") ].forEach(function(sel, idx){
-    sel.innerHTML = "";
-    if(idx === 1){
-      var optAll = document.createElement("option");
-      optAll.value = ""; optAll.textContent = "كل المراحل";
-      sel.appendChild(optAll);
-    }
-    if(idx === 2){
-      var optPick = document.createElement("option");
-      optPick.value = ""; optPick.textContent = "اختر المرحلة…";
-      sel.appendChild(optPick);
-    }
-    STAGES.forEach(function(s){
-      var o = document.createElement("option");
-      o.value = s.id; o.textContent = s.name;
-      sel.appendChild(o);
-    });
-  });
-  [ $("scopeUnit"), $("filterUnit") ].forEach(function(sel, idx){
-    sel.innerHTML = "";
-    if(idx === 1){
-      var optAll = document.createElement("option");
-      optAll.value = ""; optAll.textContent = "كل الوحدات";
-      sel.appendChild(optAll);
-    }
-    for(var i=1;i<=UNIT_COUNT;i++){
-      var o = document.createElement("option");
-      o.value = i; o.textContent = "الوحدة " + i;
-      sel.appendChild(o);
-    }
-  });
-  $("filterStage").onchange = renderTable;
-  $("filterUnit").onchange = renderTable;
-}
-
-function applyRoleRestrictions(){
-  var isTeacher = (role === "teacher");
-  $("scopeStage").disabled = isTeacher;
-  $("filterStage").disabled = isTeacher;
-  $("btnClear").classList.toggle("hide", isTeacher);
-  if(isTeacher && teacherStage){
-    $("scopeStage").value = teacherStage;
-    $("filterStage").value = teacherStage;
-  }
-  renderTable();
-}
-
-/* ============ العرض: التدريب ============ */
-function renderAll(){ renderStages(); renderTable(); if(curStage) renderUnits(); if(curStage && curUnit) renderGroupCards(); }
-
-function renderStages(){
-  var box = $("stageList");
+/* ============ العرض: شاشة الطالب (اسم + معلّم) ============ */
+function renderTeacherPickList(){
+  var box = $("teacherPickList");
   box.innerHTML = "";
-  var any = false;
-  STAGES.forEach(function(s){
-    var total = stageTotal(s.id);
-    if(total > 0) any = true;
-    var avg = stageAvg(s.id);
+  if(!cloudOn){
+    $("teacherPickInfo").textContent = "السحابة غير مفعّلة على هذا الرابط — لا يمكن اختيار معلّم محدَّد الآن.";
+    return;
+  }
+  if(!TEACHERS.length){
+    $("teacherPickInfo").textContent = "لا يوجد معلّمون مسجّلون بعد. اطلب من معلّمك إنشاء حسابه أولاً.";
+    return;
+  }
+  $("teacherPickInfo").textContent = "اختر اسم معلّمك:";
+  TEACHERS.forEach(function(t){
     var b = document.createElement("button");
     b.className = "g";
-    b.innerHTML = '<div class="t">' + esc(s.name) + '</div>' +
-                  '<div class="s">' + total + ' كلمة · معدّل ' + avg + '%</div>' +
-                  '<div class="bar"><i style="width:' + avg + '%"></i></div>';
-    b.onclick = function(){ curStage = s.id; showUnitScreen(); };
+    b.innerHTML = '<div class="t">' + esc(t.username) + '</div>' +
+                  (t.label ? '<div class="s">' + esc(t.label) + '</div>' : '');
+    b.onclick = function(){
+      document.querySelectorAll("#teacherPickList .g").forEach(function(x){ x.style.borderColor = ""; x.style.background = ""; });
+      b.style.borderColor = "var(--accent)"; b.style.background = "var(--soft)";
+      b.dataset.picked = "1";
+      $("teacherPickList").dataset.value = t.username;
+    };
     box.appendChild(b);
   });
-  $("stageInfo").textContent = any
-    ? "اختر مرحلة للاطّلاع على وحداتها."
-    : "لا توجد كلمات محفوظة بعد في أي مرحلة. انتقل إلى «إدارة الكلمات» لإضافتها.";
 }
+function showStudentSetup(){
+  curUnit = null; session = null;
+  $("studentSetup").classList.remove("hide");
+  $("unitSetup").classList.add("hide");
+  $("groupSetup").classList.add("hide");
+  $("quiz").classList.add("hide");
+  $("result").classList.add("hide");
+  $("studentNameInput").value = studentName || "";
+  renderTeacherPickList();
+  if(studentTeacher){
+    setTimeout(function(){
+      var btns = document.querySelectorAll("#teacherPickList .g");
+      btns.forEach(function(b){ if(b.textContent.indexOf(studentTeacher) === 0) b.click(); });
+    }, 30);
+  }
+}
+$("btnStartAsStudent").onclick = function(){
+  var name = $("studentNameInput").value.trim();
+  var picked = $("teacherPickList").dataset.value;
+  var st = $("studentSetupStatus");
+  if(!name){ st.textContent = "اكتب اسمك أولاً."; return; }
+  if(!picked){ st.textContent = "اختر اسم معلّمك من القائمة."; return; }
+  studentName = name; studentTeacher = picked;
+  try{ localStorage.setItem(LS_SNAME, studentName); localStorage.setItem(LS_STEACH, studentTeacher); }catch(e){}
+  st.textContent = "";
+  showUnitScreen();
+};
+
+/* ============ العرض: الوحدات والمجموعات ============ */
+function renderAll(){ renderTable(); if(role) renderRoleUI(); if(!studentTeacher){ /* لا شيء */ } }
 
 function renderUnits(){
-  $("crumbStage").textContent = stageName(curStage);
+  $("crumbName").textContent = studentName || "—";
+  $("crumbTeacher").textContent = teacherLabel(studentTeacher);
   var box = $("unitList");
   box.innerHTML = "";
   var any = false;
   for(var u=1;u<=UNIT_COUNT;u++){
-    var list = wordsFor(curStage, u);
+    var list = wordsFor(studentTeacher, u);
     if(list.length) any = true;
-    var avg = unitAvg(curStage, u);
+    var avg = unitAvg(studentTeacher, u);
     var b = document.createElement("button");
     b.className = "g";
     b.innerHTML = '<div class="t">الوحدة ' + u + '</div>' +
@@ -723,13 +673,12 @@ function renderUnits(){
     (function(u){ b.onclick = function(){ curUnit = u; showGroupScreen(); }; })(u);
     box.appendChild(b);
   }
-  $("unitInfo").textContent = any ? "اختر وحدة للتدريب على كلماتها." : "لا توجد كلمات في وحدات هذه المرحلة بعد.";
+  $("unitInfo").textContent = any ? "اختر وحدة للتدريب على كلماتها." : "لم يُدخل معلّمك أي كلمات بعد.";
 }
 
 function renderGroupCards(){
-  $("crumbStage2").textContent = stageName(curStage);
   $("crumbUnit").textContent = curUnit;
-  var list = wordsFor(curStage, curUnit);
+  var list = wordsFor(studentTeacher, curUnit);
   var n = groupCountFor(list);
   var box = $("groupList");
   $("countInfo").textContent = list.length
@@ -739,7 +688,7 @@ function renderGroupCards(){
   for(var i=0;i<n;i++){
     (function(i){
       var g = groupSlice(list, i);
-      var key = groupKey(curStage, curUnit, i);
+      var key = groupKey(studentTeacher, curUnit, i);
       var pct = progress[key] || 0;
       var b = document.createElement("button");
       b.className = "g";
@@ -752,63 +701,28 @@ function renderGroupCards(){
   }
 }
 
-function showStageScreen(){
-  curStage = null; curUnit = null;
-  $("stageSetup").classList.remove("hide");
-  $("unitSetup").classList.add("hide");
-  $("groupSetup").classList.add("hide");
-  renderStages();
-}
 function showUnitScreen(){
+  if(!studentTeacher){ showStudentSetup(); return; }
   curUnit = null;
-  $("stageSetup").classList.add("hide");
+  $("studentSetup").classList.add("hide");
   $("unitSetup").classList.remove("hide");
   $("groupSetup").classList.add("hide");
   renderUnits();
 }
 function showGroupScreen(){
-  $("stageSetup").classList.add("hide");
+  $("studentSetup").classList.add("hide");
   $("unitSetup").classList.add("hide");
   $("groupSetup").classList.remove("hide");
   renderGroupCards();
 }
 
-/* ============ العرض: جدول الإدارة ============ */
-function renderTable(){
-  var tb = $("wordTable").getElementsByTagName("tbody")[0];
-  $("wc").textContent = words.length;
-  var fs = $("filterStage").value, fu = $("filterUnit").value;
-  tb.innerHTML = "";
-  for(var i=0;i<words.length;i++){
-    (function(i){
-      var w = words[i];
-      if(fs && w.stage !== fs) return;
-      if(fu && (+w.unit) !== (+fu)) return;
-      var tr = document.createElement("tr");
-      tr.innerHTML = '<td style="font-size:.82rem">' + esc(stageName(w.stage)) + '</td>' +
-                     '<td style="font-size:.82rem">' + esc(w.unit) + '</td>' +
-                     '<td class="en">' + esc(w.en) + speakBtn(w.en) + '</td>' +
-                     '<td>' + esc(w.ar) + '</td>';
-      var td = document.createElement("td");
-      var del = document.createElement("button");
-      del.className = "mini"; del.textContent = "✕"; del.title = "حذف";
-      del.onclick = function(){ words.splice(i,1); saveAll(); };
-      td.appendChild(del); tr.appendChild(td); tb.appendChild(tr);
-    })(i);
-  }
-}
-
 /* ============ الاختبار ============ */
-function curDir(){
-  if(dir === "mix") return Math.random() < 0.5 ? "en2ar" : "ar2en";
-  return dir;
-}
+function curDir(){ if(dir === "mix") return Math.random() < 0.5 ? "en2ar" : "ar2en"; return dir; }
 
 function startQuiz(key, list){
-  if(cloudOn) ensureStudent();
   var items = shuffle(list.slice());
   session = { gi: key, items: items, i: 0, right: 0, wrong: [], helped: [], hints: 0, answered: false, source: list };
-  $("stageSetup").classList.add("hide");
+  $("studentSetup").classList.add("hide");
   $("unitSetup").classList.add("hide");
   $("groupSetup").classList.add("hide");
   $("result").classList.add("hide");
@@ -832,14 +746,8 @@ function showQuestion(){
   w.className = "word" + (e2a ? " en" : "");
 
   var qs = $("qSpk");
-  if(e2a){
-    qs.classList.remove("hide");
-    qs.onclick = function(){ speak(it.en); };
-    speak(it.en);
-  }else{
-    qs.classList.add("hide");
-    qs.onclick = null;
-  }
+  if(e2a){ qs.classList.remove("hide"); qs.onclick = function(){ speak(it.en); }; speak(it.en); }
+  else{ qs.classList.add("hide"); qs.onclick = null; }
 
   var a = $("answer");
   a.value = "";
@@ -848,8 +756,7 @@ function showQuestion(){
   a.disabled = false;
   a.focus();
   $("fb").className = "fb";
-  $("hintBox").className = "hintbox";
-  $("hintBox").innerHTML = "";
+  $("hintBox").className = "hintbox"; $("hintBox").innerHTML = "";
   $("btnHint").disabled = false;
   s.hints = 0;
   $("btnCheck").textContent = "تحقّق";
@@ -864,12 +771,10 @@ function maskAnswer(correct, n){
   for(var i=0;i<target.length;i++){
     var ch = target.charAt(i);
     if(ch === " "){ out += "  "; continue; }
-    if(shown < n){ out += ch; shown++; }
-    else out += "•";
+    if(shown < n){ out += ch; shown++; } else out += "•";
   }
   return out;
 }
-
 function showHint(){
   var s = session;
   if(!s || s.answered) return;
@@ -878,20 +783,14 @@ function showHint(){
   var correct = e2a ? it.ar : it.en;
   var target = variants(correct)[0] || correct;
   var letters = target.replace(/\s/g,"").length;
-
   s.hints++;
-  if(s.hints >= letters){
-    s.hints = letters;
-    markAnswer(false, correct, e2a, true);
-    return;
-  }
+  if(s.hints >= letters){ s.hints = letters; markAnswer(false, correct, e2a, true); return; }
   var hb = $("hintBox");
   hb.className = "hintbox on";
   hb.innerHTML = '<div class="mask' + (e2a ? '' : ' ltr') + '">' + esc(maskAnswer(correct, s.hints)) + '</div>' +
                  '<div class="n">مساعدة ' + s.hints + ' — عدد الأحرف: ' + letters + '</div>';
   $("answer").focus();
 }
-
 function markAnswer(ok, correct, e2a, revealed){
   var s = session, fb = $("fb"), it = s.items[s.i];
   var enWord = e2a ? null : (variants(correct)[0] || correct);
@@ -921,7 +820,6 @@ function markAnswer(ok, correct, e2a, revealed){
   $("hintBox").className = "hintbox";
   $("btnCheck").focus();
 }
-
 function check(){
   var s = session;
   if(s.answered){ s.i++; showQuestion(); return; }
@@ -932,13 +830,7 @@ function check(){
   if(!val.trim()) return;
   markAnswer(isRight(val, correct), correct, e2a, false);
 }
-
-function skip(){
-  var s = session;
-  if(!s.answered) s.wrong.push(s.items[s.i]);
-  s.i++;
-  showQuestion();
-}
+function skip(){ var s = session; if(!s.answered) s.wrong.push(s.items[s.i]); s.i++; showQuestion(); }
 
 function encourage(pct){
   if(pct === 100) return "🏆 ممتاز جداً! أتقنت كل كلمات هذه المجموعة بلا أي خطأ!";
@@ -948,7 +840,6 @@ function encourage(pct){
   if(pct >= 40)   return "💪 تحتاج بعض المراجعة، لكنك في الطريق الصحيح. حاول مرة أخرى.";
   return "📖 يبدو أن هذه المجموعة تحتاج مراجعة من البداية — لا بأس، كرّر التدريب وستتحسّن.";
 }
-
 function finish(){
   var s = session;
   var total = s.items.length;
@@ -968,16 +859,12 @@ function finish(){
     var h = "";
     if(s.wrong.length){
       h += '<p class="hint" style="margin-top:14px">الكلمات التي أخطأت فيها:</p><div class="scroll"><table><tbody>';
-      for(var i=0;i<s.wrong.length;i++){
-        h += '<tr><td class="en">' + esc(s.wrong[i].en) + speakBtn(s.wrong[i].en) + '</td><td>' + esc(s.wrong[i].ar) + '</td></tr>';
-      }
+      for(var i=0;i<s.wrong.length;i++) h += '<tr><td class="en">' + esc(s.wrong[i].en) + speakBtn(s.wrong[i].en) + '</td><td>' + esc(s.wrong[i].ar) + '</td></tr>';
       h += '</tbody></table></div>';
     }
     if(s.helped.length){
       h += '<p class="hint" style="margin-top:14px">أجبت عنها بمساعدة (تحتاج مراجعة):</p><div class="scroll"><table><tbody>';
-      for(var k=0;k<s.helped.length;k++){
-        h += '<tr><td class="en">' + esc(s.helped[k].en) + speakBtn(s.helped[k].en) + '</td><td>' + esc(s.helped[k].ar) + '</td></tr>';
-      }
+      for(var k=0;k<s.helped.length;k++) h += '<tr><td class="en">' + esc(s.helped[k].en) + speakBtn(s.helped[k].en) + '</td><td>' + esc(s.helped[k].ar) + '</td></tr>';
       h += '</tbody></table></div>';
     }
     box.innerHTML = h;
@@ -986,36 +873,20 @@ function finish(){
     box.innerHTML = "";
     $("btnWrongOnly").classList.add("hide");
   }
-  renderStages();
-  if(curStage) renderUnits();
-  if(curStage && curUnit) renderGroupCards();
+  if(curUnit) renderUnits();
 }
-
 function backToGroups(){
   $("quiz").classList.add("hide");
   $("result").classList.add("hide");
-  if(curStage && curUnit) showGroupScreen();
-  else if(curStage) showUnitScreen();
-  else showStageScreen();
+  if(curUnit) showGroupScreen(); else showUnitScreen();
 }
 
 /* ============ تحليل الإدخال ============ */
-function parseBulk(txt, defStage, defUnit, lockStage){
+function parseBulk(txt, teacher, unit){
   var out = [], lines = (txt||"").split(/\r?\n/);
-  var stage = defStage, unit = defUnit;
   for(var i=0;i<lines.length;i++){
     var line = lines[i].trim();
-    if(!line) continue;
-    if(line.slice(0,2) === "##"){
-      var head = line.slice(2).trim();
-      var mu = head.match(/الوحدة\s*(\d+)/);
-      if(mu) unit = +mu[1];
-      if(!lockStage){
-        var found = STAGES.find(function(s){ return head.indexOf(s.name) !== -1; });
-        if(found) stage = found.id;
-      }
-      continue;
-    }
+    if(!line || line.slice(0,2) === "##") continue;
     var parts = line.split(/\s*[=\t:]\s*|\s+[-–—]\s+|\s*[;،]\s*/);
     if(parts.length < 2){
       var m = line.match(/^([A-Za-z][A-Za-z '’\-]*)\s+(.+)$/);
@@ -1026,7 +897,7 @@ function parseBulk(txt, defStage, defUnit, lockStage){
     var en, ar;
     if(/[\u0600-\u06FF]/.test(a) && !/[\u0600-\u06FF]/.test(b)){ en = b; ar = a; }
     else { en = a; ar = b; }
-    out.push({ stage: (lockStage ? defStage : stage), unit: unit, en: en, ar: ar });
+    out.push({ teacher: teacher, unit: unit, en: en, ar: ar });
   }
   return out;
 }
@@ -1045,47 +916,26 @@ function hashPw(s){
   for(var i=0;i<s.length;i++){ h = ((h*33) ^ s.charCodeAt(i)) >>> 0; }
   return Promise.resolve("f" + h.toString(16));
 }
-function saveSettings(patch){
-  if(patch.superHash !== undefined){
-    superHash = patch.superHash;
-    try{ localStorage.setItem(LS_SUPER_H, superHash || ""); }catch(e){}
-  }
-  if(patch.teacherUser !== undefined){
-    teacherUser = patch.teacherUser;
-    try{ localStorage.setItem(LS_TEACH_U, teacherUser || ""); }catch(e){}
-  }
-  if(patch.teacherHash !== undefined){
-    teacherHash = patch.teacherHash;
-    try{ localStorage.setItem(LS_TEACH_H, teacherHash || ""); }catch(e){}
-  }
-  if(patch.teacherStage !== undefined){
-    teacherStage = patch.teacherStage;
-    try{ localStorage.setItem(LS_TEACH_STAGE, teacherStage || ""); }catch(e){}
-  }
+function saveSuperHash(h){
+  superHash = h;
+  try{ localStorage.setItem(LS_SUPER_H, h || ""); }catch(e){}
   if(cloudOn && DB){
-    var doc = { superHash: superHash, teacherUser: teacherUser, teacherHash: teacherHash, teacherStage: teacherStage, updatedAt: Date.now() };
-    Promise.resolve(DB.doc("vocab/settings").set(doc)).catch(function(){});
+    Promise.resolve(DB.doc("vocab/settings").set({ superHash: h, updatedAt: Date.now() })).catch(function(){});
   }
 }
 function renderLock(){
-  if(unlocked && pwMode !== "changeSuper"){
+  if(unlockedNow() && pwMode !== "changeSuper"){
     $("lock").classList.add("hide");
     $("adminBody").classList.remove("hide");
-    $("roleTag").textContent = role === "super" ? "✅ وضع المسؤول الرئيسي" : "✅ وضع المعلم المساعد";
-    $("btnChangePw").classList.toggle("hide", role !== "super");
-    $("teacherAcctCard").classList.toggle("hide", role !== "super");
-    if(role === "super") renderTeacherAcctStatus();
-    applyRoleRestrictions();
-    renderCloudStatus();
+    renderRoleUI();
     refreshStudents();
     return;
   }
   $("lock").classList.remove("hide");
   $("adminBody").classList.add("hide");
-  $("loginUser").value = ""; $("pw1").value = ""; $("pw2").value = "";
-  $("lockStatus").textContent = "";
+  $("pw1").value = ""; $("pw2").value = ""; $("lockStatus").textContent = "";
   if(pwMode === "changeSuper"){
-    $("lockTitle").textContent = "🔑 تغيير كلمة مروري (المسؤول الرئيسي)";
+    $("lockTitle").textContent = "🔑 تغيير كلمة مروري";
     $("lockHint").textContent = "اكتب كلمة المرور الجديدة مرتين.";
     $("loginRoleSeg").classList.add("hide");
     $("loginUser").classList.add("hide");
@@ -1095,7 +945,7 @@ function renderLock(){
   }else if(!superHash){
     pwMode = "setSuper";
     $("lockTitle").textContent = "🔑 تعيين كلمة مرور المسؤول الرئيسي";
-    $("lockHint").textContent = "لم تُعيَّن كلمة مرور بعد. أنت أول من يدخل هنا يصبح المسؤول الرئيسي — كلمتك ستتحكم بكل شيء.";
+    $("lockHint").textContent = "لم تُعيَّن كلمة مرور بعد. أنت أول من يدخل هنا يصبح المسؤول الرئيسي.";
     $("loginRoleSeg").classList.add("hide");
     $("loginUser").classList.add("hide");
     $("pw1").placeholder = "كلمة المرور";
@@ -1103,7 +953,7 @@ function renderLock(){
     $("btnUnlock").textContent = "تعيين وحفظ";
   }else{
     pwMode = "enter";
-    $("lockTitle").textContent = "🔒 منطقة الأستاذ";
+    $("lockTitle").textContent = "🔒 منطقة المعلّمين";
     $("loginRoleSeg").classList.remove("hide");
     $("pw1").placeholder = "كلمة المرور";
     $("pw2").classList.add("hide");
@@ -1113,99 +963,198 @@ function renderLock(){
   setTimeout(function(){ ($("loginUser").classList.contains("hide") ? $("pw1") : $("loginUser")).focus(); }, 50);
 }
 function updateLoginFieldsForRole(){
-  var segBtnsLogin = $("loginRoleSeg").getElementsByTagName("button");
-  for(var i=0;i<segBtnsLogin.length;i++){
-    segBtnsLogin[i].className = (segBtnsLogin[i].getAttribute("data-role") === loginRole) ? "on" : "";
-  }
+  var b = $("loginRoleSeg").getElementsByTagName("button");
+  for(var i=0;i<b.length;i++) b[i].className = (b[i].getAttribute("data-role")===loginRole) ? "on" : "";
   if(loginRole === "super"){
     $("lockHint").textContent = "اكتب كلمة مرور المسؤول الرئيسي فقط.";
     $("loginUser").classList.add("hide");
   }else{
-    $("lockHint").textContent = "اكتب اسم المستخدم وكلمة المرور اللذين أعطاك المسؤول الرئيسي.";
+    $("lockHint").textContent = "اكتب اسم المستخدم وكلمة المرور اللذين أعطاك المسؤول.";
     $("loginUser").classList.remove("hide");
   }
 }
 function submitPw(){
-  var u = $("loginUser").value.trim(), a = $("pw1").value, b = $("pw2").value;
-  if(pwMode === "setSuper" || pwMode === "changeSuper"){
+  var u = $("loginUser").value.trim();
+  var a = $("pw1").value, b = $("pw2").value;
+
+  if(pwMode === "changeSuper"){
     if(a.length < 4){ $("lockStatus").textContent = "كلمة المرور قصيرة جداً (4 أحرف على الأقل)."; return; }
     if(a !== b){ $("lockStatus").textContent = "كلمتا المرور غير متطابقتين."; return; }
-    hashPw(a).then(function(h){
-      saveSettings({ superHash: h });
-      unlocked = true; role = "super"; pwMode = "enter";
-      renderLock();
-      setStatus("تم حفظ كلمة المرور ✓");
-    });
-  }else{
-    if(loginRole === "super"){
-      hashPw(a).then(function(h){
-        if(h === superHash){ unlocked = true; role = "super"; renderLock(); }
-        else{ $("lockStatus").textContent = "كلمة المرور غير صحيحة."; $("pw1").value = ""; $("pw1").focus(); }
-      });
+    if(role === "super"){
+      hashPw(a).then(function(h){ saveSuperHash(h); pwMode = "enter"; renderLock(); setStatus_safe("تم تحديث كلمة المرور ✓"); });
     }else{
-      if(!u){ $("lockStatus").textContent = "اكتب اسم المستخدم الذي أعطاك المسؤول."; return; }
-      if(!teacherUser){ $("lockStatus").textContent = "لم يُنشئ المسؤول حساب معلم مساعد بعد."; return; }
       hashPw(a).then(function(h){
-        if(u === teacherUser && h === teacherHash){ unlocked = true; role = "teacher"; renderLock(); }
-        else{ $("lockStatus").textContent = "اسم المستخدم أو كلمة المرور غير صحيحة."; $("pw1").value = ""; $("pw1").focus(); }
+        Promise.resolve(DB.doc("vocab_teachers/" + sanitizeUsername(myUsername)).update({ passwordHash: h }))
+          .then(function(){ pwMode = "enter"; renderLock(); })
+          .catch(function(){ $("lockStatus").textContent = "تعذّر الحفظ."; });
       });
     }
+    return;
+  }
+  if(pwMode === "setSuper"){
+    if(a.length < 4){ $("lockStatus").textContent = "كلمة المرور قصيرة جداً (4 أحرف على الأقل)."; return; }
+    if(a !== b){ $("lockStatus").textContent = "كلمتا المرور غير متطابقتين."; return; }
+    hashPw(a).then(function(h){ saveSuperHash(h); role = "super"; myUsername = null; pwMode = "enter"; renderLock(); });
+    return;
+  }
+  if(loginRole === "super"){
+    hashPw(a).then(function(h){
+      if(h === superHash){ role = "super"; myUsername = null; renderLock(); }
+      else{ $("lockStatus").textContent = "كلمة المرور غير صحيحة."; $("pw1").value = ""; $("pw1").focus(); }
+    });
+  }else{
+    if(!u){ $("lockStatus").textContent = "اكتب اسم المستخدم."; return; }
+    if(!cloudOn || !DB){ $("lockStatus").textContent = "تحتاج تفعيل السحابة لتسجيل دخول المعلّمين."; return; }
+    var id = sanitizeUsername(u);
+    Promise.resolve(DB.doc("vocab_teachers/" + id).get()).then(function(snap){
+      var d = unwrap(snap);
+      if(!d){ $("lockStatus").textContent = "اسم المستخدم غير موجود."; return; }
+      return hashPw(a).then(function(h){
+        if(h === d.passwordHash){ role = "teacher"; myUsername = d.username || u; renderLock(); }
+        else{ $("lockStatus").textContent = "كلمة المرور غير صحيحة."; $("pw1").value = ""; $("pw1").focus(); }
+      });
+    }).catch(function(){ $("lockStatus").textContent = "تعذّر تسجيل الدخول."; });
   }
 }
-function renderTeacherAcctStatus(){
-  var el = $("teacherAcctStatus");
-  if(!el) return;
-  el.textContent = teacherUser
-    ? ("اسم المستخدم الحالي للمعلم المساعد: " + teacherUser + " — مقيَّد بمرحلة: " + (teacherStage ? stageName(teacherStage) : "—"))
-    : "لم يُنشأ حساب معلم مساعد بعد.";
-  $("teachUserInput").value = teacherUser || "";
-  $("teachStageSelect").value = teacherStage || "";
-}
+function setStatus_safe(t){ var el = $("teachersStatus"); if(el) el.textContent = t; }
 
-/* ============ حالة السحابة ولوحة الطلاب ============ */
+/* ============ واجهة الأدوار (بعد تسجيل الدخول) ============ */
+function fillScopeSelectors(){
+  var isSuper = role === "super";
+  [ $("scopeTeacher"), $("filterTeacher") ].forEach(function(sel){
+    sel.innerHTML = "";
+    var optAll = null;
+    if(sel.id === "filterTeacher"){ optAll = document.createElement("option"); optAll.value=""; optAll.textContent="كل المعلّمين"; sel.appendChild(optAll); }
+    TEACHERS.forEach(function(t){
+      var o = document.createElement("option"); o.value = t.username; o.textContent = t.username; sel.appendChild(o);
+    });
+    sel.classList.toggle("hide", !isSuper);
+  });
+  [ $("scopeUnit"), $("filterUnit") ].forEach(function(sel, idx){
+    sel.innerHTML = "";
+    if(idx === 1){ var optAllU = document.createElement("option"); optAllU.value=""; optAllU.textContent="كل الوحدات"; sel.appendChild(optAllU); }
+    for(var i=1;i<=UNIT_COUNT;i++){ var o=document.createElement("option"); o.value=i; o.textContent="الوحدة "+i; sel.appendChild(o); }
+  });
+  $("thTeacher").classList.toggle("hide", !isSuper);
+  $("thStudentTeacher").classList.toggle("hide", !isSuper);
+  $("btnClear").classList.toggle("hide", false);
+  if(!isSuper && myUsername){
+    $("scopeTeacher").innerHTML = '<option value="'+esc(myUsername)+'">'+esc(myUsername)+'</option>';
+    $("filterTeacher").innerHTML = '<option value="'+esc(myUsername)+'">'+esc(myUsername)+'</option>';
+  }
+  $("filterTeacher").onchange = renderTable;
+  $("filterUnit").onchange = renderTable;
+}
+function currentScopeTeacher(){ return role === "super" ? $("scopeTeacher").value : myUsername; }
+function currentFilterTeacher(){ return role === "super" ? $("filterTeacher").value : myUsername; }
+
+function renderRoleUI(){
+  $("roleTag").textContent = role === "super" ? "✅ وضع المسؤول الرئيسي" : ("✅ معلّم: " + myUsername);
+  $("teachersCard").classList.toggle("hide", role !== "super");
+  fillScopeSelectors();
+  renderTable();
+  if(role === "super") renderTeachersTable();
+  renderCloudStatus();
+}
 function renderCloudStatus(){
-  var el = $("cloudStatus");
-  if(!el) return;
+  var el = $("cloudStatus"); if(!el) return;
   el.textContent = cloudOn
-    ? "☁️ السحابة مفعّلة — أي تعديل تحفظه هنا يصل تلقائياً لكل الطلاب على أي جهاز."
+    ? "☁️ السحابة مفعّلة — أي تعديل تحفظه هنا يصل تلقائياً لكل الطلاب المرتبطين بحسابك."
     : "⚪ السحابة غير مفعّلة — الكلمات محفوظة على هذا الجهاز فقط.";
 }
-function fmtWhen(ts){
-  if(!ts) return "—";
-  try{ return new Date(ts).toLocaleString("ar"); }catch(e){ return "—"; }
+
+/* ============ جدول الكلمات ============ */
+function renderTable(){
+  var tb = $("wordTable").getElementsByTagName("tbody")[0];
+  var scoped = role === "teacher" ? words.filter(function(w){ return w.teacher===myUsername; }) : words;
+  $("wc").textContent = scoped.length;
+  if(!tb) return;
+  var ft = role === "super" ? $("filterTeacher").value : myUsername;
+  var fu = $("filterUnit") ? $("filterUnit").value : "";
+  tb.innerHTML = "";
+  for(var i=0;i<words.length;i++){
+    (function(i){
+      var w = words[i];
+      if(role === "teacher" && w.teacher !== myUsername) return;
+      if(role === "super" && ft && w.teacher !== ft) return;
+      if(fu && (+w.unit) !== (+fu)) return;
+      var tr = document.createElement("tr");
+      tr.innerHTML = (role==="super" ? '<td style="font-size:.82rem">'+esc(w.teacher)+'</td>' : '') +
+                     '<td style="font-size:.82rem">' + esc(w.unit) + '</td>' +
+                     '<td class="en">' + esc(w.en) + speakBtn(w.en) + '</td>' +
+                     '<td>' + esc(w.ar) + '</td>';
+      var td = document.createElement("td");
+      var del = document.createElement("button");
+      del.className = "mini"; del.textContent = "✕"; del.title = "حذف";
+      del.onclick = function(){ words.splice(i,1); saveWordsAll(); };
+      td.appendChild(del); tr.appendChild(td); tb.appendChild(tr);
+    })(i);
+  }
 }
+
+/* ============ إدارة المعلّمين (للمسؤول) ============ */
+function renderTeachersTable(){
+  var tb = $("teachersTable").getElementsByTagName("tbody")[0];
+  tb.innerHTML = "";
+  TEACHERS.forEach(function(t){
+    var count = teacherTotal(t.username);
+    var tr = document.createElement("tr");
+    tr.innerHTML = '<td>' + esc(t.username) + '</td>' +
+                   '<td>' + esc(t.label||"—") + '</td>' +
+                   '<td>' + count + '</td>' +
+                   '<td style="font-size:.78rem;color:var(--muted)">' + (t.createdAt ? new Date(t.createdAt).toLocaleDateString("ar") : "—") + '</td>';
+    var resetTd = document.createElement("td");
+    var resetBtn = document.createElement("button");
+    resetBtn.className = "mini"; resetBtn.style.color = "var(--accent)"; resetBtn.textContent = "🔑 كلمة مرور جديدة";
+    resetBtn.onclick = function(){ resetTeacherPassword(t.username); };
+    resetTd.appendChild(resetBtn); tr.appendChild(resetTd);
+    var delTd = document.createElement("td");
+    var delBtn = document.createElement("button");
+    delBtn.className = "mini"; delBtn.textContent = "✕ حذف";
+    delBtn.onclick = function(){ deleteTeacherAccount(t.username); };
+    delTd.appendChild(delBtn); tr.appendChild(delTd);
+    tb.appendChild(tr);
+  });
+}
+function resetTeacherPassword(username){
+  var p = window.prompt("كلمة مرور جديدة للمعلّم \"" + username + "\":", "");
+  if(!p) return;
+  if(p.length < 4){ alert("كلمة المرور قصيرة جداً."); return; }
+  hashPw(p).then(function(h){
+    Promise.resolve(DB.doc("vocab_teachers/" + sanitizeUsername(username)).update({ passwordHash: h }))
+      .then(function(){ setStatus_safe("تم تحديث كلمة مرور " + username + " ✓"); })
+      .catch(function(){ setStatus_safe("تعذّر التحديث."); });
+  });
+}
+function deleteTeacherAccount(username){
+  if(!confirm("حذف حساب المعلّم \"" + username + "\" نهائياً؟ (كلماته تبقى محفوظة، لكنه لن يستطيع الدخول)")) return;
+  Promise.resolve(DB.doc("vocab_teachers/" + sanitizeUsername(username)).delete())
+    .then(function(){ loadTeachersDirectory(function(){ renderTeachersTable(); fillScopeSelectors(); renderTable(); }); })
+    .catch(function(){ alert("تعذّر الحذف."); });
+}
+
+/* ============ لوحة الطلاب ============ */
+var openStudentDetail = null;
+function fmtWhen(ts){ if(!ts) return "—"; try{ return new Date(ts).toLocaleString("ar"); }catch(e){ return "—"; } }
 function studentDetailHtml(st){
   var groups = st.groups || {};
   var keys = Object.keys(groups);
-  if(role === "teacher") keys = keys.filter(function(k){ return parseGroupKey(k).stage === teacherStage; });
   if(!keys.length) return '<div class="detailWrap"><p class="hint" style="margin:0">لا توجد نتائج مفصّلة لهذا الطالب بعد.</p></div>';
-  var byStage = {};
+  var byUnit = {};
   keys.forEach(function(k){
     var p = parseGroupKey(k);
-    byStage[p.stage] = byStage[p.stage] || {};
-    byStage[p.stage][p.unit] = byStage[p.stage][p.unit] || [];
-    byStage[p.stage][p.unit].push({ idx: p.idx, pct: groups[k] });
+    byUnit[p.unit] = byUnit[p.unit] || [];
+    byUnit[p.unit].push({ idx: p.idx, pct: groups[k] });
   });
-  var h = '<div class="detailWrap"><div class="scroll"><table><thead><tr><th>المرحلة</th><th>الوحدة</th><th>المجموعة</th><th>النسبة</th></tr></thead><tbody>';
-  Object.keys(byStage).forEach(function(stageId){
-    var units = byStage[stageId];
-    Object.keys(units).sort(function(a,b){return (+a)-(+b);}).forEach(function(u){
-      units[u].sort(function(a,b){return a.idx-b.idx;}).forEach(function(g){
-        h += '<tr><td>' + esc(stageName(stageId)) + '</td><td>' + esc(u) + '</td><td>مجموعة ' + (g.idx+1) + '</td><td>' + g.pct + '%</td></tr>';
-      });
+  var h = '<div class="detailWrap"><div class="scroll"><table><thead><tr><th>الوحدة</th><th>المجموعة</th><th>النسبة</th></tr></thead><tbody>';
+  Object.keys(byUnit).sort(function(a,b){return (+a)-(+b);}).forEach(function(u){
+    byUnit[u].sort(function(a,b){return a.idx-b.idx;}).forEach(function(g){
+      h += '<tr><td>' + esc(u) + '</td><td>مجموعة ' + (g.idx+1) + '</td><td>' + g.pct + '%</td></tr>';
     });
   });
   h += '</tbody></table></div></div>';
   return h;
 }
-function deleteStudent(id, name){
-  if(role !== "super") return;
-  if(!confirm("حذف الطالب \"" + (name || "بلا اسم") + "\" ونتائجه نهائياً؟")) return;
-  Promise.resolve(DB.doc("vocab_students/" + id).delete())
-    .then(function(){ refreshStudents(); })
-    .catch(function(){ alert("تعذّر حذف الطالب — تأكد من تفعيل السحابة."); });
-}
-
 function refreshStudents(){
   var hint = $("studentsHint");
   if(!cloudOn){
@@ -1216,12 +1165,7 @@ function refreshStudents(){
   }
   hint.textContent = "جارٍ التحميل…";
   loadStudents(function(list){
-    if(role === "teacher"){
-      list = list.filter(function(st){
-        var g = st.groups || {};
-        return Object.keys(g).some(function(k){ return parseGroupKey(k).stage === teacherStage; });
-      });
-    }
+    if(role === "teacher") list = list.filter(function(st){ return st.teacher === myUsername; });
     $("stc").textContent = list.length;
     hint.textContent = list.length ? "اضغط 👁 لعرض تفاصيل كل مجموعة أنهاها الطالب." : "لا يوجد طلاب سجّلوا نتائج بعد.";
     var tb = $("studentsTable").getElementsByTagName("tbody")[0];
@@ -1230,37 +1174,28 @@ function refreshStudents(){
       (function(st){
         var groups = st.groups || {};
         var keys = Object.keys(groups);
-        if(role === "teacher") keys = keys.filter(function(k){ return parseGroupKey(k).stage === teacherStage; });
         var avg = keys.length ? Math.round(keys.reduce(function(s,k){ return s+groups[k]; },0)/keys.length) : 0;
         var tr = document.createElement("tr");
         var eyeTd = document.createElement("td");
         var eye = document.createElement("button");
         eye.className = "eyeBtn"; eye.textContent = "👁";
-        eye.onclick = function(){
-          openStudentDetail = (openStudentDetail === st.name) ? null : st.name;
-          refreshStudents();
-        };
-        eyeTd.appendChild(eye);
-        tr.appendChild(eyeTd);
+        eye.onclick = function(){ openStudentDetail = (openStudentDetail === st._id) ? null : st._id; refreshStudents(); };
+        eyeTd.appendChild(eye); tr.appendChild(eyeTd);
         tr.insertAdjacentHTML("beforeend",
           '<td>' + esc(st.name||"—") + '</td>' +
+          (role==="super" ? '<td>'+esc(st.teacher||"—")+'</td>' : '') +
           '<td>' + keys.length + ' مجموعة</td>' +
           '<td>' + avg + '%</td>' +
           '<td style="font-size:.78rem;color:var(--muted)">' + esc(fmtWhen(st.updatedAt)) + '</td>');
         var delTd = document.createElement("td");
-        if(role === "super" && st._id){
-          var delBtn = document.createElement("button");
-          delBtn.className = "mini"; delBtn.textContent = "✕ حذف";
-          delBtn.onclick = function(){ deleteStudent(st._id, st.name); };
-          delTd.appendChild(delBtn);
-        }
-        tr.appendChild(delTd);
+        var delBtn = document.createElement("button");
+        delBtn.className = "mini"; delBtn.textContent = "✕ حذف";
+        delBtn.onclick = function(){ deleteStudent(st._id, st.name); };
+        delTd.appendChild(delBtn); tr.appendChild(delTd);
         tb.appendChild(tr);
-        if(openStudentDetail === st.name){
-          var dtr = document.createElement("tr");
-          dtr.className = "detailRow";
-          var dtd = document.createElement("td");
-          dtd.colSpan = 5;
+        if(openStudentDetail === st._id){
+          var dtr = document.createElement("tr"); dtr.className = "detailRow";
+          var dtd = document.createElement("td"); dtd.colSpan = role==="super" ? 5 : 4;
           dtd.innerHTML = studentDetailHtml(st);
           dtr.appendChild(document.createElement("td"));
           dtr.appendChild(dtd);
@@ -1294,49 +1229,15 @@ for(var lr=0; lr<loginRoleBtns.length; lr++){
     };
   })(loginRoleBtns[lr]);
 }
-$("loginUser").addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); $("pw1").focus(); } });
 $("pw1").addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); if($("pw2").classList.contains("hide")) submitPw(); else $("pw2").focus(); } });
 $("pw2").addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); submitPw(); } });
-$("btnLock").onclick = function(){ unlocked = false; role = null; pwMode = "enter"; loginRole = "super"; renderLock(); };
+$("btnLock").onclick = function(){ role = null; myUsername = null; pwMode = "enter"; loginRole = "super"; renderLock(); };
 $("btnChangePw").onclick = function(){ pwMode = "changeSuper"; renderLock(); };
-$("btnSaveTeacher").onclick = function(){
-  var u = $("teachUserInput").value.trim();
-  var p1 = $("teachPw1").value, p2 = $("teachPw2").value;
-  var stg = $("teachStageSelect").value;
-  var st = $("teacherAcctSaveStatus");
-  if(!u){ st.textContent = "اكتب اسم مستخدم للمعلم المساعد."; return; }
-  if(p1.length < 4){ st.textContent = "كلمة المرور قصيرة جداً (4 أحرف على الأقل)."; return; }
-  if(p1 !== p2){ st.textContent = "كلمتا المرور غير متطابقتين."; return; }
-  if(!stg){ st.textContent = "اختر المرحلة التي يعمل عليها هذا المعلم."; return; }
-  hashPw(p1).then(function(h){
-    saveSettings({ teacherUser: u, teacherHash: h, teacherStage: stg });
-    $("teachPw1").value = ""; $("teachPw2").value = "";
-    renderTeacherAcctStatus();
-    st.textContent = "تم حفظ حساب المعلم المساعد ✓ — أعطِه اسم المستخدم وكلمة المرور، وهو مقيَّد بمرحلة «" + stageName(stg) + "» فقط.";
-  });
-};
-$("btnDeleteTeacher").onclick = function(){
-  var st = $("teacherAcctSaveStatus");
-  if(!teacherUser){ st.textContent = "لا يوجد حساب معلم مساعد لحذفه."; return; }
-  if(!confirm("حذف حساب المعلم المساعد \"" + teacherUser + "\" نهائياً؟ لن يستطيع الدخول بعد الآن.")) return;
-  saveSettings({ teacherUser: null, teacherHash: null, teacherStage: null });
-  $("teachUserInput").value = ""; $("teachPw1").value = ""; $("teachPw2").value = ""; $("teachStageSelect").value = "";
-  renderTeacherAcctStatus();
-  st.textContent = "تم حذف حساب المعلم المساعد ✓";
-};
 $("btnRefreshStudents").onclick = refreshStudents;
-
-$("btnBackToStages").onclick = showStageScreen;
-$("btnBackToUnits").onclick = showUnitScreen;
 
 var segBtns = $("dirSeg").getElementsByTagName("button");
 for(var i=0;i<segBtns.length;i++){
-  (function(b){
-    b.onclick = function(){
-      for(var j=0;j<segBtns.length;j++) segBtns[j].className = "";
-      b.className = "on"; dir = b.getAttribute("data-d");
-    };
-  })(segBtns[i]);
+  (function(b){ b.onclick = function(){ for(var j=0;j<segBtns.length;j++) segBtns[j].className = ""; b.className = "on"; dir = b.getAttribute("data-d"); }; })(segBtns[i]);
 }
 
 $("btnCheck").onclick = check;
@@ -1346,10 +1247,7 @@ $("btnQuit").onclick = backToGroups;
 $("btnBack").onclick = backToGroups;
 $("btnAgain").onclick = function(){ startQuiz(session.gi, session.source); };
 $("btnResetGroup").onclick = function(){
-  if(session && session.gi !== -1){
-    delete progress[session.gi];
-    saveLocal();
-  }
+  if(session && session.gi !== -1){ delete progress[session.gi]; saveLocal(); }
   backToGroups();
 };
 $("btnWrongOnly").onclick = function(){
@@ -1364,64 +1262,83 @@ $("btnWrongOnly").onclick = function(){
 };
 $("answer").addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); check(); } });
 document.addEventListener("keydown", function(e){
-  if(e.key === "Enter" && session && session.answered && !$("quiz").classList.contains("hide")){
-    e.preventDefault(); check();
-  }
+  if(e.key === "Enter" && session && session.answered && !$("quiz").classList.contains("hide")){ e.preventDefault(); check(); }
 });
 
 $("btnAdd").onclick = function(){
-  var stage = (role === "teacher") ? teacherStage : $("scopeStage").value;
-  var unit = +$("scopeUnit").value;
-  var n = parseBulk($("bulk").value, stage, unit, role === "teacher");
+  var teacher = currentScopeTeacher(); var unit = +$("scopeUnit").value;
+  if(!teacher){ setStatus("اختر المعلّم أولاً."); return; }
+  var n = parseBulk($("bulk").value, teacher, unit);
   if(!n.length){ setStatus("لم يتم التعرّف على أي كلمة. تأكد من الصيغة: english = العربية"); return; }
   for(var i=0;i<n.length;i++){
     var dup = false;
     for(var j=0;j<words.length;j++){
-      if(words[j].stage===n[i].stage && (+words[j].unit)===(+n[i].unit) && norm(words[j].en) === norm(n[i].en)){
-        words[j].ar = n[i].ar; dup = true; break;
-      }
+      if(words[j].teacher===n[i].teacher && (+words[j].unit)===(+n[i].unit) && norm(words[j].en) === norm(n[i].en)){ words[j].ar = n[i].ar; dup = true; break; }
     }
     if(!dup) words.push(n[i]);
   }
   $("bulk").value = "";
-  saveAll();
-  setStatus("تمت إضافة/تحديث " + n.length + " كلمة في " + stageName(stage) + " — الوحدة " + unit + ". المجموع الكلي: " + words.length);
+  saveWordsAll();
+  setStatus("تمت إضافة/تحديث " + n.length + " كلمة في الوحدة " + unit + ". المجموع الكلي: " + words.length);
 };
 $("btnReplace").onclick = function(){
-  var stage = (role === "teacher") ? teacherStage : $("scopeStage").value;
-  var unit = +$("scopeUnit").value;
-  var n = parseBulk($("bulk").value, stage, unit, role === "teacher");
+  var teacher = currentScopeTeacher(); var unit = +$("scopeUnit").value;
+  if(!teacher){ setStatus("اختر المعلّم أولاً."); return; }
+  var n = parseBulk($("bulk").value, teacher, unit);
   if(!n.length){ setStatus("لا توجد كلمات صالحة في المربع."); return; }
-  if(!confirm("سيتم حذف كلمات " + stageName(stage) + " — الوحدة " + unit + " الحالية واستبدالها بـ " + n.length + " كلمة. هل تريد المتابعة؟")) return;
-  words = words.filter(function(w){ return !(w.stage===stage && (+w.unit)===unit); }).concat(n);
-  // حذف تقدّم هذه الوحدة لأن كلماتها تغيّرت
-  Object.keys(progress).forEach(function(k){ var p=parseGroupKey(k); if(p.stage===stage && p.unit===unit) delete progress[k]; });
+  if(!confirm("سيتم حذف كلمات الوحدة " + unit + " الحالية لهذا المعلّم واستبدالها بـ " + n.length + " كلمة. هل تريد المتابعة؟")) return;
+  words = words.filter(function(w){ return !(w.teacher===teacher && (+w.unit)===unit); }).concat(n);
+  Object.keys(progress).forEach(function(k){ var p=parseGroupKey(k); if(p.teacher===teacher && p.unit===unit) delete progress[k]; });
   $("bulk").value = "";
-  saveAll();
+  saveWordsAll();
 };
 $("btnClear").onclick = function(){
-  if(role !== "super") return; // هذه الصلاحية للمسؤول الرئيسي فقط
-  if(!confirm("هل تريد حذف كل الكلمات في كل المراحل والوحدات نهائياً؟")) return;
-  words = []; progress = {};
-  saveAll();
+  var teacher = currentFilterTeacher() || currentScopeTeacher();
+  if(role === "super" && !teacher){
+    if(!confirm("هل تريد حذف كل الكلمات لكل المعلّمين نهائياً؟")) return;
+    words = []; progress = {};
+  }else{
+    if(!teacher) return;
+    if(!confirm("هل تريد حذف كل كلمات \"" + teacher + "\" نهائياً؟")) return;
+    words = words.filter(function(w){ return w.teacher !== teacher; });
+  }
+  saveWordsAll();
 };
 $("btnExport").onclick = function(){
-  var lines = [];
-  var source = (role === "teacher") ? words.filter(function(w){ return w.stage === teacherStage; }) : words;
+  var scoped = role === "teacher" ? words.filter(function(w){ return w.teacher===myUsername; }) : words;
   var byScope = {};
-  source.forEach(function(w){
-    var k = w.stage + "|" + w.unit;
+  scoped.forEach(function(w){
+    var k = w.teacher + "|" + w.unit;
     byScope[k] = byScope[k] || [];
     byScope[k].push(w);
   });
+  var lines = [];
   Object.keys(byScope).forEach(function(k){
     var parts = k.split("|");
-    lines.push("## " + stageName(parts[0]) + " - الوحدة " + parts[1]);
+    lines.push("## " + parts[0] + " - الوحدة " + parts[1]);
     byScope[k].forEach(function(w){ lines.push(w.en + " = " + w.ar); });
     lines.push("");
   });
   $("bulk").value = lines.join("\n").trim();
-  setStatus("تم عرض نسخة كاملة من كل الكلمات مقسّمة بالمراحل والوحدات — انسخها واحتفظ بها.");
+  setStatus("تم عرض نسخة من الكلمات — انسخها واحتفظ بها.");
+};
+
+$("btnAddTeacher").onclick = function(){
+  var u = sanitizeUsername($("newTeachUser").value);
+  var p = $("newTeachPass").value;
+  var label = $("newTeachLabel").value.trim();
+  var st = $("teachersStatus");
+  if(!u){ st.textContent = "اكتب اسم مستخدم صالح."; return; }
+  if(p.length < 4){ st.textContent = "كلمة المرور قصيرة جداً (4 أحرف على الأقل)."; return; }
+  hashPw(p).then(function(h){
+    Promise.resolve(DB.doc("vocab_teachers/" + u).set({ username: u, passwordHash: h, label: label, createdAt: Date.now() }))
+      .then(function(){
+        $("newTeachUser").value = ""; $("newTeachPass").value = ""; $("newTeachLabel").value = "";
+        st.textContent = "تمت إضافة المعلّم " + u + " ✓ أرسل له اسم المستخدم وكلمة المرور.";
+        loadTeachersDirectory(function(){ renderTeachersTable(); fillScopeSelectors(); renderTable(); });
+      })
+      .catch(function(){ st.textContent = "تعذّر الحفظ — تأكد من تفعيل السحابة."; });
+  });
 };
 
 boot();
