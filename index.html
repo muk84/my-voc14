@@ -286,11 +286,12 @@ td.en{direction:ltr;text-align:left}
 
     <div class="card hide" id="teacherAcctCard">
       <h2>👤 حساب المعلم المساعد</h2>
-      <p class="hint">أنشئ اسم مستخدم وكلمة مرور خاصة تعطيها لمعلم آخر ليدخل ويضيف الكلمات، بينما تبقى أنت المسؤول الوحيد القادر على تغيير أي كلمة مرور في أي وقت.</p>
+      <p class="hint">أنشئ اسم مستخدم وكلمة مرور خاصة تعطيها لمعلم آخر، وحدّد له مرحلة واحدة فقط يعمل عليها — سيرى ويضيف كلمات هذه المرحلة فقط، ولن يرى شيئاً من مراحل أخرى. تبقى أنت المسؤول الوحيد القادر على رؤية كل شيء وتغيير أي كلمة مرور في أي وقت.</p>
       <p class="hint" id="teacherAcctStatus" style="margin-bottom:10px"></p>
       <input type="text" id="teachUserInput" placeholder="اسم مستخدم المعلم المساعد" autocomplete="off" style="margin-bottom:8px">
       <input type="password" id="teachPw1" placeholder="كلمة مرور المعلم المساعد" autocomplete="off" style="margin-bottom:8px">
-      <input type="password" id="teachPw2" placeholder="تأكيد كلمة المرور" autocomplete="off">
+      <input type="password" id="teachPw2" placeholder="تأكيد كلمة المرور" autocomplete="off" style="margin-bottom:8px">
+      <select id="teachStageSelect" style="width:100%"></select>
       <div class="row" style="margin-top:12px">
         <button class="btn" id="btnSaveTeacher">حفظ / تحديث حساب المعلم</button>
       </div>
@@ -377,11 +378,12 @@ var GROUP = 10;
 var superHash = null;      // تجزئة كلمة مرور المسؤول الرئيسي
 var teacherUser = null;    // اسم مستخدم المعلم المساعد
 var teacherHash = null;    // تجزئة كلمة مرور المعلم المساعد
+var teacherStage = null;   // المرحلة الوحيدة المسموح للمعلم المساعد العمل عليها
 var role = null;           // "super" | "teacher" | null
 var loginRole = "super";   // الدور المُختار حالياً في شاشة تسجيل الدخول
 var unlocked = false;   // هل فُتحت منطقة الأستاذ في هذه الجلسة
 var pwMode = "enter";   // enter | setSuper | changeSuper
-var LS_SUPER_H = "vocab_super_pwhash_v1", LS_TEACH_U = "vocab_teacher_user_v1", LS_TEACH_H = "vocab_teacher_pwhash_v1";
+var LS_SUPER_H = "vocab_super_pwhash_v1", LS_TEACH_U = "vocab_teacher_user_v1", LS_TEACH_H = "vocab_teacher_pwhash_v1", LS_TEACH_STAGE = "vocab_teacher_stage_v1";
 var LS_SID = "vocab_student_id", LS_SNAME = "vocab_student_name";
 var studentId = null, studentName = null;
 var openStudentDetail = null; // اسم الطالب المفتوح تفصيله حالياً في لوحة الأستاذ
@@ -504,6 +506,7 @@ function loadLocal(){
     if(sh) superHash = sh;
     var tu = localStorage.getItem(LS_TEACH_U); if(tu) teacherUser = tu;
     var th = localStorage.getItem(LS_TEACH_H); if(th) teacherHash = th;
+    var ts = localStorage.getItem(LS_TEACH_STAGE); if(ts) teacherStage = ts;
   }catch(e){}
 }
 function unwrap(snap){
@@ -542,6 +545,11 @@ function applySettingsDoc(d){
   if(d.teacherHash !== undefined && d.teacherHash !== teacherHash){
     teacherHash = d.teacherHash || null;
     try{ localStorage.setItem(LS_TEACH_H, teacherHash || ""); }catch(e){}
+  }
+  if(d.teacherStage !== undefined && d.teacherStage !== teacherStage){
+    teacherStage = d.teacherStage || null;
+    try{ localStorage.setItem(LS_TEACH_STAGE, teacherStage || ""); }catch(e){}
+    if(unlocked && role === "teacher") applyRoleRestrictions();
   }
   if($("admin") && !$("admin").classList.contains("hide") && !unlocked) renderLock();
   if(unlocked && role === "super") renderTeacherAcctStatus();
@@ -626,12 +634,17 @@ function boot(){
 
 /* ============ العرض: الاختيارات المنسدلة ============ */
 function fillScopeSelectors(){
-  [ $("scopeStage"), $("filterStage") ].forEach(function(sel, idx){
+  [ $("scopeStage"), $("filterStage"), $("teachStageSelect") ].forEach(function(sel, idx){
     sel.innerHTML = "";
     if(idx === 1){
       var optAll = document.createElement("option");
       optAll.value = ""; optAll.textContent = "كل المراحل";
       sel.appendChild(optAll);
+    }
+    if(idx === 2){
+      var optPick = document.createElement("option");
+      optPick.value = ""; optPick.textContent = "اختر المرحلة…";
+      sel.appendChild(optPick);
     }
     STAGES.forEach(function(s){
       var o = document.createElement("option");
@@ -654,6 +667,18 @@ function fillScopeSelectors(){
   });
   $("filterStage").onchange = renderTable;
   $("filterUnit").onchange = renderTable;
+}
+
+function applyRoleRestrictions(){
+  var isTeacher = (role === "teacher");
+  $("scopeStage").disabled = isTeacher;
+  $("filterStage").disabled = isTeacher;
+  $("btnClear").classList.toggle("hide", isTeacher);
+  if(isTeacher && teacherStage){
+    $("scopeStage").value = teacherStage;
+    $("filterStage").value = teacherStage;
+  }
+  renderTable();
 }
 
 /* ============ العرض: التدريب ============ */
@@ -974,7 +999,7 @@ function backToGroups(){
 }
 
 /* ============ تحليل الإدخال ============ */
-function parseBulk(txt, defStage, defUnit){
+function parseBulk(txt, defStage, defUnit, lockStage){
   var out = [], lines = (txt||"").split(/\r?\n/);
   var stage = defStage, unit = defUnit;
   for(var i=0;i<lines.length;i++){
@@ -984,8 +1009,10 @@ function parseBulk(txt, defStage, defUnit){
       var head = line.slice(2).trim();
       var mu = head.match(/الوحدة\s*(\d+)/);
       if(mu) unit = +mu[1];
-      var found = STAGES.find(function(s){ return head.indexOf(s.name) !== -1; });
-      if(found) stage = found.id;
+      if(!lockStage){
+        var found = STAGES.find(function(s){ return head.indexOf(s.name) !== -1; });
+        if(found) stage = found.id;
+      }
       continue;
     }
     var parts = line.split(/\s*[=\t:]\s*|\s+[-–—]\s+|\s*[;،]\s*/);
@@ -998,7 +1025,7 @@ function parseBulk(txt, defStage, defUnit){
     var en, ar;
     if(/[\u0600-\u06FF]/.test(a) && !/[\u0600-\u06FF]/.test(b)){ en = b; ar = a; }
     else { en = a; ar = b; }
-    out.push({ stage: stage, unit: unit, en: en, ar: ar });
+    out.push({ stage: (lockStage ? defStage : stage), unit: unit, en: en, ar: ar });
   }
   return out;
 }
@@ -1030,8 +1057,12 @@ function saveSettings(patch){
     teacherHash = patch.teacherHash;
     try{ localStorage.setItem(LS_TEACH_H, teacherHash || ""); }catch(e){}
   }
+  if(patch.teacherStage !== undefined){
+    teacherStage = patch.teacherStage;
+    try{ localStorage.setItem(LS_TEACH_STAGE, teacherStage || ""); }catch(e){}
+  }
   if(cloudOn && DB){
-    var doc = { superHash: superHash, teacherUser: teacherUser, teacherHash: teacherHash, updatedAt: Date.now() };
+    var doc = { superHash: superHash, teacherUser: teacherUser, teacherHash: teacherHash, teacherStage: teacherStage, updatedAt: Date.now() };
     Promise.resolve(DB.doc("vocab/settings").set(doc)).catch(function(){});
   }
 }
@@ -1043,6 +1074,7 @@ function renderLock(){
     $("btnChangePw").classList.toggle("hide", role !== "super");
     $("teacherAcctCard").classList.toggle("hide", role !== "super");
     if(role === "super") renderTeacherAcctStatus();
+    applyRoleRestrictions();
     renderCloudStatus();
     refreshStudents();
     return;
@@ -1122,8 +1154,11 @@ function submitPw(){
 function renderTeacherAcctStatus(){
   var el = $("teacherAcctStatus");
   if(!el) return;
-  el.textContent = teacherUser ? ("اسم المستخدم الحالي للمعلم المساعد: " + teacherUser) : "لم يُنشأ حساب معلم مساعد بعد.";
+  el.textContent = teacherUser
+    ? ("اسم المستخدم الحالي للمعلم المساعد: " + teacherUser + " — مقيَّد بمرحلة: " + (teacherStage ? stageName(teacherStage) : "—"))
+    : "لم يُنشأ حساب معلم مساعد بعد.";
   $("teachUserInput").value = teacherUser || "";
+  $("teachStageSelect").value = teacherStage || "";
 }
 
 /* ============ حالة السحابة ولوحة الطلاب ============ */
@@ -1141,6 +1176,7 @@ function fmtWhen(ts){
 function studentDetailHtml(st){
   var groups = st.groups || {};
   var keys = Object.keys(groups);
+  if(role === "teacher") keys = keys.filter(function(k){ return parseGroupKey(k).stage === teacherStage; });
   if(!keys.length) return '<div class="detailWrap"><p class="hint" style="margin:0">لا توجد نتائج مفصّلة لهذا الطالب بعد.</p></div>';
   var byStage = {};
   keys.forEach(function(k){
@@ -1171,6 +1207,12 @@ function refreshStudents(){
   }
   hint.textContent = "جارٍ التحميل…";
   loadStudents(function(list){
+    if(role === "teacher"){
+      list = list.filter(function(st){
+        var g = st.groups || {};
+        return Object.keys(g).some(function(k){ return parseGroupKey(k).stage === teacherStage; });
+      });
+    }
     $("stc").textContent = list.length;
     hint.textContent = list.length ? "اضغط 👁 لعرض تفاصيل كل مجموعة أنهاها الطالب." : "لا يوجد طلاب سجّلوا نتائج بعد.";
     var tb = $("studentsTable").getElementsByTagName("tbody")[0];
@@ -1179,6 +1221,7 @@ function refreshStudents(){
       (function(st){
         var groups = st.groups || {};
         var keys = Object.keys(groups);
+        if(role === "teacher") keys = keys.filter(function(k){ return parseGroupKey(k).stage === teacherStage; });
         var avg = keys.length ? Math.round(keys.reduce(function(s,k){ return s+groups[k]; },0)/keys.length) : 0;
         var tr = document.createElement("tr");
         var eyeTd = document.createElement("td");
@@ -1242,15 +1285,17 @@ $("btnChangePw").onclick = function(){ pwMode = "changeSuper"; renderLock(); };
 $("btnSaveTeacher").onclick = function(){
   var u = $("teachUserInput").value.trim();
   var p1 = $("teachPw1").value, p2 = $("teachPw2").value;
+  var stg = $("teachStageSelect").value;
   var st = $("teacherAcctSaveStatus");
   if(!u){ st.textContent = "اكتب اسم مستخدم للمعلم المساعد."; return; }
   if(p1.length < 4){ st.textContent = "كلمة المرور قصيرة جداً (4 أحرف على الأقل)."; return; }
   if(p1 !== p2){ st.textContent = "كلمتا المرور غير متطابقتين."; return; }
+  if(!stg){ st.textContent = "اختر المرحلة التي يعمل عليها هذا المعلم."; return; }
   hashPw(p1).then(function(h){
-    saveSettings({ teacherUser: u, teacherHash: h });
+    saveSettings({ teacherUser: u, teacherHash: h, teacherStage: stg });
     $("teachPw1").value = ""; $("teachPw2").value = "";
     renderTeacherAcctStatus();
-    st.textContent = "تم حفظ حساب المعلم المساعد ✓ — أعطِه اسم المستخدم وكلمة المرور هذين.";
+    st.textContent = "تم حفظ حساب المعلم المساعد ✓ — أعطِه اسم المستخدم وكلمة المرور، وهو مقيَّد بمرحلة «" + stageName(stg) + "» فقط.";
   });
 };
 $("btnRefreshStudents").onclick = refreshStudents;
@@ -1299,8 +1344,9 @@ document.addEventListener("keydown", function(e){
 });
 
 $("btnAdd").onclick = function(){
-  var stage = $("scopeStage").value, unit = +$("scopeUnit").value;
-  var n = parseBulk($("bulk").value, stage, unit);
+  var stage = (role === "teacher") ? teacherStage : $("scopeStage").value;
+  var unit = +$("scopeUnit").value;
+  var n = parseBulk($("bulk").value, stage, unit, role === "teacher");
   if(!n.length){ setStatus("لم يتم التعرّف على أي كلمة. تأكد من الصيغة: english = العربية"); return; }
   for(var i=0;i<n.length;i++){
     var dup = false;
@@ -1316,8 +1362,9 @@ $("btnAdd").onclick = function(){
   setStatus("تمت إضافة/تحديث " + n.length + " كلمة في " + stageName(stage) + " — الوحدة " + unit + ". المجموع الكلي: " + words.length);
 };
 $("btnReplace").onclick = function(){
-  var stage = $("scopeStage").value, unit = +$("scopeUnit").value;
-  var n = parseBulk($("bulk").value, stage, unit);
+  var stage = (role === "teacher") ? teacherStage : $("scopeStage").value;
+  var unit = +$("scopeUnit").value;
+  var n = parseBulk($("bulk").value, stage, unit, role === "teacher");
   if(!n.length){ setStatus("لا توجد كلمات صالحة في المربع."); return; }
   if(!confirm("سيتم حذف كلمات " + stageName(stage) + " — الوحدة " + unit + " الحالية واستبدالها بـ " + n.length + " كلمة. هل تريد المتابعة؟")) return;
   words = words.filter(function(w){ return !(w.stage===stage && (+w.unit)===unit); }).concat(n);
@@ -1327,20 +1374,16 @@ $("btnReplace").onclick = function(){
   saveAll();
 };
 $("btnClear").onclick = function(){
+  if(role !== "super") return; // هذه الصلاحية للمسؤول الرئيسي فقط
   if(!confirm("هل تريد حذف كل الكلمات في كل المراحل والوحدات نهائياً؟")) return;
   words = []; progress = {};
   saveAll();
 };
 $("btnExport").onclick = function(){
   var lines = [];
-  STAGES.forEach(function(s){
-    for(var u=1;u<=UNIT_COUNT;u++){
-      var list = wordsFor(s.id, u);
-      if(!list.length) return;
-    }
-  });
+  var source = (role === "teacher") ? words.filter(function(w){ return w.stage === teacherStage; }) : words;
   var byScope = {};
-  words.forEach(function(w){
+  source.forEach(function(w){
     var k = w.stage + "|" + w.unit;
     byScope[k] = byScope[k] || [];
     byScope[k].push(w);
