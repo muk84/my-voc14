@@ -294,6 +294,7 @@ td.en{direction:ltr;text-align:left}
       <select id="teachStageSelect" style="width:100%"></select>
       <div class="row" style="margin-top:12px">
         <button class="btn" id="btnSaveTeacher">حفظ / تحديث حساب المعلم</button>
+        <button class="btn ghost" id="btnDeleteTeacher" style="color:var(--bad)">✕ حذف حساب المعلم</button>
       </div>
       <div class="status" id="teacherAcctSaveStatus"></div>
     </div>
@@ -332,7 +333,7 @@ td.en{direction:ltr;text-align:left}
     <div class="card" id="studentsCard">
       <h2>تقدّم الطلاب <span class="tag" id="stc">0</span></h2>
       <p class="hint" id="studentsHint">تحتاج تفعيل السحابة لرؤية تقدّم الطلاب هنا.</p>
-      <div class="scroll"><table id="studentsTable"><thead><tr><th></th><th>الاسم</th><th>المجموعات المكتملة</th><th>المعدل العام</th><th>آخر نشاط</th></tr></thead><tbody></tbody></table></div>
+      <div class="scroll"><table id="studentsTable"><thead><tr><th></th><th>الاسم</th><th>المجموعات المكتملة</th><th>المعدل العام</th><th>آخر نشاط</th><th></th></tr></thead><tbody></tbody></table></div>
       <div class="row" style="margin-top:12px">
         <button class="btn ghost" id="btnRefreshStudents">تحديث القائمة</button>
       </div>
@@ -619,7 +620,7 @@ function loadStudents(cb){
   Promise.resolve(DB.collection("vocab_students").get()).then(function(qs){
     var list = [];
     var docs = qs.docs || [];
-    docs.forEach(function(d){ var v = unwrap(d); if(v) list.push(v); });
+    docs.forEach(function(d){ var v = unwrap(d); if(v){ v._id = d.id; list.push(v); } });
     list.sort(function(a,b){ return (b.updatedAt||0) - (a.updatedAt||0); });
     cb(list);
   }).catch(function(){ cb([]); });
@@ -1197,6 +1198,14 @@ function studentDetailHtml(st){
   h += '</tbody></table></div></div>';
   return h;
 }
+function deleteStudent(id, name){
+  if(role !== "super") return;
+  if(!confirm("حذف الطالب \"" + (name || "بلا اسم") + "\" ونتائجه نهائياً؟")) return;
+  Promise.resolve(DB.doc("vocab_students/" + id).delete())
+    .then(function(){ refreshStudents(); })
+    .catch(function(){ alert("تعذّر حذف الطالب — تأكد من تفعيل السحابة."); });
+}
+
 function refreshStudents(){
   var hint = $("studentsHint");
   if(!cloudOn){
@@ -1238,12 +1247,20 @@ function refreshStudents(){
           '<td>' + keys.length + ' مجموعة</td>' +
           '<td>' + avg + '%</td>' +
           '<td style="font-size:.78rem;color:var(--muted)">' + esc(fmtWhen(st.updatedAt)) + '</td>');
+        var delTd = document.createElement("td");
+        if(role === "super" && st._id){
+          var delBtn = document.createElement("button");
+          delBtn.className = "mini"; delBtn.textContent = "✕ حذف";
+          delBtn.onclick = function(){ deleteStudent(st._id, st.name); };
+          delTd.appendChild(delBtn);
+        }
+        tr.appendChild(delTd);
         tb.appendChild(tr);
         if(openStudentDetail === st.name){
           var dtr = document.createElement("tr");
           dtr.className = "detailRow";
           var dtd = document.createElement("td");
-          dtd.colSpan = 4;
+          dtd.colSpan = 5;
           dtd.innerHTML = studentDetailHtml(st);
           dtr.appendChild(document.createElement("td"));
           dtr.appendChild(dtd);
@@ -1297,6 +1314,15 @@ $("btnSaveTeacher").onclick = function(){
     renderTeacherAcctStatus();
     st.textContent = "تم حفظ حساب المعلم المساعد ✓ — أعطِه اسم المستخدم وكلمة المرور، وهو مقيَّد بمرحلة «" + stageName(stg) + "» فقط.";
   });
+};
+$("btnDeleteTeacher").onclick = function(){
+  var st = $("teacherAcctSaveStatus");
+  if(!teacherUser){ st.textContent = "لا يوجد حساب معلم مساعد لحذفه."; return; }
+  if(!confirm("حذف حساب المعلم المساعد \"" + teacherUser + "\" نهائياً؟ لن يستطيع الدخول بعد الآن.")) return;
+  saveSettings({ teacherUser: null, teacherHash: null, teacherStage: null });
+  $("teachUserInput").value = ""; $("teachPw1").value = ""; $("teachPw2").value = ""; $("teachStageSelect").value = "";
+  renderTeacherAcctStatus();
+  st.textContent = "تم حذف حساب المعلم المساعد ✓";
 };
 $("btnRefreshStudents").onclick = refreshStudents;
 
