@@ -593,6 +593,7 @@ function deleteStudent(id, name){
 
 function boot(){
   loadLocal();
+  if(studentTeacher){ showUnitScreen(); } else { showStudentSetup(); }
   renderAll();
   initCloud();
 }
@@ -653,7 +654,13 @@ $("btnStartAsStudent").onclick = function(){
 };
 
 /* ============ العرض: الوحدات والمجموعات ============ */
-function renderAll(){ renderTable(); if(role) renderRoleUI(); if(!studentTeacher){ /* لا شيء */ } }
+function renderAll(){
+  renderTable();
+  if(role) renderRoleUI();
+  if($("studentSetup") && !$("studentSetup").classList.contains("hide")) renderTeacherPickList();
+  if($("unitSetup") && !$("unitSetup").classList.contains("hide")) renderUnits();
+  if($("groupSetup") && !$("groupSetup").classList.contains("hide")) renderGroupCards();
+}
 
 function renderUnits(){
   $("crumbName").textContent = studentName || "—";
