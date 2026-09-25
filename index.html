@@ -34,7 +34,9 @@
 *,*::before,*::after{box-sizing:border-box}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{
-  margin:0; background:var(--bg); color:var(--ink);
+  margin:0; background-color:var(--bg); color:var(--ink);
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><g fill='none' stroke='%236a778a' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' opacity='0.16'><path d='M10 22 Q22 15 34 22 L34 38 Q22 32 10 38 Z'/><path d='M34 22 Q46 15 58 22 L58 38 Q46 32 34 38 Z'/><g transform='translate(100,14) rotate(45)'><rect x='0' y='0' width='7' height='32' rx='1.5'/><path d='M0 32 L7 32 L3.5 39 Z'/></g><g transform='translate(18,90)'><path d='M0 0 L22 -9 L44 0 L22 9 Z'/><line x1='37' y1='-2' x2='37' y2='12'/><circle cx='37' cy='14' r='1.8' fill='%236a778a'/></g><g transform='translate(88,100) rotate(-18)'><rect x='0' y='0' width='46' height='9' rx='1.5'/><line x1='9' y1='0' x2='9' y2='4.5'/><line x1='18' y1='0' x2='18' y2='4.5'/><line x1='27' y1='0' x2='27' y2='4.5'/><line x1='36' y1='0' x2='36' y2='4.5'/></g></g></svg>");
+  background-repeat:repeat; background-attachment:fixed;
   font-family:"Cairo","Segoe UI",Tahoma,system-ui,sans-serif;
   line-height:1.65; -webkit-text-size-adjust:100%;
 }
@@ -159,13 +161,13 @@ td.en{direction:ltr;text-align:left}
 <body>
 <div class="wrap">
   <header>
-    <h1>حافظة الكلمات — إنكليزي / عربي</h1>
+    <h1>📚 حافظة الكلمات — إنكليزي / عربي</h1>
     <p>كل معلّم له طلابه وكلماته الخاصة، لا يراها أحد سواه والمسؤول. الطالب يختار معلّمه مرة واحدة، ويتدرّب على كلماته فقط.</p>
   </header>
 
   <div class="tabs">
-    <button id="tabStudy" class="on">التدريب</button>
-    <button id="tabAdmin">إدارة الكلمات</button>
+    <button id="tabStudy" class="on">📝 التدريب</button>
+    <button id="tabAdmin">🧑‍🏫 إدارة الكلمات</button>
   </div>
 
   <!-- ======= التدريب ======= -->
@@ -176,8 +178,8 @@ td.en{direction:ltr;text-align:left}
       <h2>مرحباً بك 👋</h2>
       <p class="hint">اكتب اسمك واختر اسم معلّمك لتبدأ التدريب على كلماته فقط.</p>
       <input type="text" id="studentNameInput" placeholder="اسمك">
-      <p class="hint" id="teacherPickInfo" style="margin-top:12px">اختر معلّمك:</p>
-      <div class="groups wide" id="teacherPickList"></div>
+      <p class="hint" id="teacherPickInfo" style="margin-top:12px">اكتب اسم مستخدم معلّمك (أعطاه لك هو):</p>
+      <input type="text" id="studentTeacherInput" placeholder="اسم مستخدم معلّمك">
       <div class="row" style="margin-top:12px">
         <button class="btn" id="btnStartAsStudent">بدء التدريب</button>
       </div>
@@ -190,7 +192,7 @@ td.en{direction:ltr;text-align:left}
         <button type="button" class="backBtn" id="btnChangeTeacher" data-nav="teacher">🔁 تغيير المعلّم</button>
         <span class="path">الطالب: <b id="crumbName"></b> — المعلّم: <b id="crumbTeacher"></b></span>
       </div>
-      <h2>اختر الوحدة</h2>
+      <h2>📖 اختر الوحدة</h2>
       <p class="hint" id="unitInfo"></p>
       <div class="groups" id="unitList"></div>
     </div>
@@ -201,7 +203,7 @@ td.en{direction:ltr;text-align:left}
         <button type="button" class="backBtn" id="btnBackToUnits" data-nav="units">🔙 رجوع للوحدات</button>
         <span class="path">الوحدة: <b id="crumbUnit"></b></span>
       </div>
-      <h2>اختر المجموعة</h2>
+      <h2>🗂️ اختر المجموعة</h2>
       <div class="row" style="margin-bottom:6px">
         <span class="hint" style="margin:0">اتجاه الاختبار:</span>
         <div class="seg" id="dirSeg">
@@ -239,7 +241,7 @@ td.en{direction:ltr;text-align:left}
     </div>
 
     <div class="card hide" id="result">
-      <h2 style="text-align:center">النتيجة</h2>
+      <h2 style="text-align:center">📊 النتيجة</h2>
       <div class="big" id="rScore"></div>
       <p class="hint" id="rMsg" style="text-align:center;font-size:1rem;font-weight:600"></p>
       <div id="rWrong"></div>
@@ -296,15 +298,15 @@ td.en{direction:ltr;text-align:left}
       <div class="row" style="margin-bottom:10px">
         <input type="text" id="newTeachUser" placeholder="اسم مستخدم معلّم جديد">
         <input type="password" id="newTeachPass" placeholder="كلمة مرور مؤقتة">
-        <input type="text" id="newTeachLabel" placeholder="تسمية اختيارية (مثلاً: السادس الابتدائي)">
+        <select id="newTeachStage" required><option value="">اختر المرحلة الدراسية (إلزامي)…</option></select>
         <button class="btn" id="btnAddTeacher">إضافة معلّم</button>
       </div>
-      <div class="scroll"><table id="teachersTable"><thead><tr><th>اسم المستخدم</th><th>التسمية</th><th>عدد الكلمات</th><th>أُنشئ في</th><th></th><th></th></tr></thead><tbody></tbody></table></div>
+      <div class="scroll"><table id="teachersTable"><thead><tr><th>اسم المستخدم</th><th>المرحلة</th><th>عدد الكلمات</th><th>أُنشئ في</th><th></th><th></th></tr></thead><tbody></tbody></table></div>
       <div class="status" id="teachersStatus"></div>
     </div>
 
     <div class="card">
-      <h2>إدخال الكلمات</h2>
+      <h2>✏️ إدخال الكلمات</h2>
       <p class="hint">
         اكتب كل كلمة في سطر مستقل بالشكل: <b>english = العربية</b><br>
         يمكن استعمال <code>=</code> أو <code>-</code> أو فاصلة أو <code>Tab</code> كفاصل. ولوضع أكثر من إجابة صحيحة افصل بينها بـ <code>/</code>.
@@ -323,7 +325,7 @@ td.en{direction:ltr;text-align:left}
     </div>
 
     <div class="card">
-      <h2>الكلمات المحفوظة <span class="tag" id="wc">0</span></h2>
+      <h2>📚 الكلمات المحفوظة <span class="tag" id="wc">0</span></h2>
       <div class="row" style="margin-bottom:10px">
         <select id="filterTeacher" class="hide"></select>
         <select id="filterUnit"></select>
@@ -335,7 +337,7 @@ td.en{direction:ltr;text-align:left}
     </div>
 
     <div class="card" id="studentsCard">
-      <h2>تقدّم الطلاب <span class="tag" id="stc">0</span></h2>
+      <h2>🎓 تقدّم الطلاب <span class="tag" id="stc">0</span></h2>
       <p class="hint" id="studentsHint">تحتاج تفعيل السحابة لرؤية تقدّم الطلاب هنا.</p>
       <div class="scroll"><table id="studentsTable"><thead><tr><th></th><th>الاسم</th><th class="hide" id="thStudentTeacher">المعلّم</th><th>المجموعات المكتملة</th><th>المعدل العام</th><th>آخر نشاط</th><th></th></tr></thead><tbody></tbody></table></div>
       <div class="row" style="margin-top:12px">
@@ -448,9 +450,25 @@ function isRight(input, correct){
 }
 function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t; } return a; }
 function sanitizeUsername(u){ return (u||"").toString().trim().toLowerCase().replace(/[^a-z0-9_\-\u0600-\u06FF]/g,""); }
+var STAGES = [
+  { id: "kg",  name: "الروضة" },
+  { id: "p1",  name: "الأول ابتدائي" },
+  { id: "p2",  name: "الثاني ابتدائي" },
+  { id: "p3",  name: "الثالث ابتدائي" },
+  { id: "p4",  name: "الرابع ابتدائي" },
+  { id: "p5",  name: "الخامس ابتدائي" },
+  { id: "p6",  name: "السادس ابتدائي" },
+  { id: "m1",  name: "الأول متوسط" },
+  { id: "m2",  name: "الثاني متوسط" },
+  { id: "m3",  name: "الثالث متوسط" },
+  { id: "s1",  name: "الرابع (الأول إعدادي)" },
+  { id: "s2",  name: "الخامس (الثاني إعدادي)" },
+  { id: "s3",  name: "السادس (الثالث إعدادي)" }
+];
+function stageName(id){ var s = STAGES.find(function(x){ return x.id===id; }); return s ? s.name : (id || "—"); }
 function teacherLabel(username){
   var t = TEACHERS.find(function(x){ return x.username===username; });
-  return t ? (t.label ? (t.username + " — " + t.label) : t.username) : username;
+  return t ? (t.stage ? (t.username + " — " + stageName(t.stage)) : t.username) : username;
 }
 function wordsFor(teacher, unit){ return words.filter(function(w){ return w.teacher===teacher && (+w.unit)===(+unit); }); }
 function groupCountFor(list){ return Math.ceil(list.length/GROUP); }
@@ -554,10 +572,11 @@ function loadTeachersDirectory(cb){
     var list = [];
     (qs.docs||[]).forEach(function(d){
       var v = unwrap(d);
-      if(v) list.push({ username: v.username, label: v.label || "", createdAt: v.createdAt || 0, _id: d.id });
+      if(v) list.push({ username: v.username, stage: v.stage || "", createdAt: v.createdAt || 0, _id: d.id });
     });
     list.sort(function(a,b){ return a.username.localeCompare(b.username); });
     TEACHERS = list;
+    teachersLoaded = true;
     if(cb) cb();
   }).catch(function(){ if(cb) cb(); });
 }
@@ -598,33 +617,8 @@ function boot(){
   initCloud();
 }
 
-/* ============ العرض: شاشة الطالب (اسم + معلّم) ============ */
-function renderTeacherPickList(){
-  var box = $("teacherPickList");
-  box.innerHTML = "";
-  if(!cloudOn){
-    $("teacherPickInfo").textContent = "السحابة غير مفعّلة على هذا الرابط — لا يمكن اختيار معلّم محدَّد الآن.";
-    return;
-  }
-  if(!TEACHERS.length){
-    $("teacherPickInfo").textContent = "لا يوجد معلّمون مسجّلون بعد. اطلب من معلّمك إنشاء حسابه أولاً.";
-    return;
-  }
-  $("teacherPickInfo").textContent = "اختر اسم معلّمك:";
-  TEACHERS.forEach(function(t){
-    var b = document.createElement("button");
-    b.className = "g";
-    b.innerHTML = '<div class="t">' + esc(t.username) + '</div>' +
-                  (t.label ? '<div class="s">' + esc(t.label) + '</div>' : '');
-    b.onclick = function(){
-      document.querySelectorAll("#teacherPickList .g").forEach(function(x){ x.style.borderColor = ""; x.style.background = ""; });
-      b.style.borderColor = "var(--accent)"; b.style.background = "var(--soft)";
-      b.dataset.picked = "1";
-      $("teacherPickList").dataset.value = t.username;
-    };
-    box.appendChild(b);
-  });
-}
+var teachersLoaded = false;
+
 function showStudentSetup(){
   curUnit = null; session = null;
   $("studentSetup").classList.remove("hide");
@@ -633,20 +627,19 @@ function showStudentSetup(){
   $("quiz").classList.add("hide");
   $("result").classList.add("hide");
   $("studentNameInput").value = studentName || "";
-  renderTeacherPickList();
-  if(studentTeacher){
-    setTimeout(function(){
-      var btns = document.querySelectorAll("#teacherPickList .g");
-      btns.forEach(function(b){ if(b.textContent.indexOf(studentTeacher) === 0) b.click(); });
-    }, 30);
-  }
+  $("studentTeacherInput").value = studentTeacher || "";
+  $("teacherPickInfo").textContent = "اكتب اسم مستخدم معلّمك (أعطاه لك هو):";
 }
 $("btnStartAsStudent").onclick = function(){
   var name = $("studentNameInput").value.trim();
-  var picked = $("teacherPickList").dataset.value;
+  var picked = sanitizeUsername($("studentTeacherInput").value);
   var st = $("studentSetupStatus");
   if(!name){ st.textContent = "اكتب اسمك أولاً."; return; }
-  if(!picked){ st.textContent = "اختر اسم معلّمك من القائمة."; return; }
+  if(!picked){ st.textContent = "اكتب اسم مستخدم معلّمك."; return; }
+  if(cloudOn && teachersLoaded && TEACHERS.length && !TEACHERS.some(function(t){ return t.username === picked; })){
+    st.textContent = "لم يُعثر على معلّم بهذا الاسم — تأكد من كتابته بشكل صحيح كما أعطاك معلّمك.";
+    return;
+  }
   studentName = name; studentTeacher = picked;
   try{ localStorage.setItem(LS_SNAME, studentName); localStorage.setItem(LS_STEACH, studentTeacher); }catch(e){}
   st.textContent = "";
@@ -657,7 +650,6 @@ $("btnStartAsStudent").onclick = function(){
 function renderAll(){
   renderTable();
   if(role) renderRoleUI();
-  if($("studentSetup") && !$("studentSetup").classList.contains("hide")) renderTeacherPickList();
   if($("unitSetup") && !$("unitSetup").classList.contains("hide")) renderUnits();
   if($("groupSetup") && !$("groupSetup").classList.contains("hide")) renderGroupCards();
 }
@@ -1059,9 +1051,17 @@ function renderRoleUI(){
   $("roleTag").textContent = role === "super" ? "✅ وضع المسؤول الرئيسي" : ("✅ معلّم: " + myUsername);
   $("teachersCard").classList.toggle("hide", role !== "super");
   fillScopeSelectors();
+  if(role === "super") fillStageSelector();
   renderTable();
   if(role === "super") renderTeachersTable();
   renderCloudStatus();
+}
+function fillStageSelector(){
+  var sel = $("newTeachStage");
+  sel.innerHTML = '<option value="">اختر المرحلة الدراسية (إلزامي)…</option>';
+  STAGES.forEach(function(s){
+    var o = document.createElement("option"); o.value = s.id; o.textContent = s.name; sel.appendChild(o);
+  });
 }
 function renderCloudStatus(){
   var el = $("cloudStatus"); if(!el) return;
@@ -1107,7 +1107,7 @@ function renderTeachersTable(){
     var count = teacherTotal(t.username);
     var tr = document.createElement("tr");
     tr.innerHTML = '<td>' + esc(t.username) + '</td>' +
-                   '<td>' + esc(t.label||"—") + '</td>' +
+                   '<td>' + esc(t.stage ? stageName(t.stage) : "—") + '</td>' +
                    '<td>' + count + '</td>' +
                    '<td style="font-size:.78rem;color:var(--muted)">' + (t.createdAt ? new Date(t.createdAt).toLocaleDateString("ar") : "—") + '</td>';
     var resetTd = document.createElement("td");
@@ -1333,15 +1333,16 @@ $("btnExport").onclick = function(){
 $("btnAddTeacher").onclick = function(){
   var u = sanitizeUsername($("newTeachUser").value);
   var p = $("newTeachPass").value;
-  var label = $("newTeachLabel").value.trim();
+  var stage = $("newTeachStage").value;
   var st = $("teachersStatus");
   if(!u){ st.textContent = "اكتب اسم مستخدم صالح."; return; }
   if(p.length < 4){ st.textContent = "كلمة المرور قصيرة جداً (4 أحرف على الأقل)."; return; }
+  if(!stage){ st.textContent = "اختيار المرحلة الدراسية إلزامي — اختر من القائمة."; return; }
   hashPw(p).then(function(h){
-    Promise.resolve(DB.doc("vocab_teachers/" + u).set({ username: u, passwordHash: h, label: label, createdAt: Date.now() }))
+    Promise.resolve(DB.doc("vocab_teachers/" + u).set({ username: u, passwordHash: h, stage: stage, createdAt: Date.now() }))
       .then(function(){
-        $("newTeachUser").value = ""; $("newTeachPass").value = ""; $("newTeachLabel").value = "";
-        st.textContent = "تمت إضافة المعلّم " + u + " ✓ أرسل له اسم المستخدم وكلمة المرور.";
+        $("newTeachUser").value = ""; $("newTeachPass").value = ""; $("newTeachStage").value = "";
+        st.textContent = "تمت إضافة المعلّم " + u + " (" + stageName(stage) + ") ✓ أرسل له اسم المستخدم وكلمة المرور.";
         loadTeachersDirectory(function(){ renderTeachersTable(); fillScopeSelectors(); renderTable(); });
       })
       .catch(function(){ st.textContent = "تعذّر الحفظ — تأكد من تفعيل السحابة."; });
