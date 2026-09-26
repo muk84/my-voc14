@@ -333,6 +333,7 @@ td.en{direction:ltr;text-align:left}
         <select id="scopeStage"></select>
         <select id="scopeUnit"></select>
       </div>
+      <p class="hint" id="scopeConfirm" style="font-weight:700;color:var(--accent)"></p>
       <textarea id="bulk" placeholder="book = كتاب&#10;school = مدرسة&#10;car = سيارة / عربة"></textarea>
       <div class="row" style="margin-top:12px">
         <button class="btn" id="btnAdd">إضافة وحفظ في هذه الوحدة</button>
@@ -354,6 +355,13 @@ td.en{direction:ltr;text-align:left}
       <div class="row" style="margin-top:12px">
         <button class="btn ghost" id="btnClear" style="color:var(--bad)">حذف الكلمات المعروضة حالياً</button>
       </div>
+      <div class="row hide" id="moveBox" style="margin-top:14px;padding-top:14px;border-top:1px dashed var(--line)">
+        <span class="hint" style="margin:0">نقل الكلمات المعروضة أعلاه إلى:</span>
+        <select id="moveTeacher"></select>
+        <select id="moveStage"></select>
+        <button class="btn ghost" id="btnMoveWords">🔀 نقل الآن</button>
+      </div>
+      <div class="status" id="moveStatus"></div>
     </div>
 
     <div class="card" id="studentsCard">
@@ -1098,31 +1106,52 @@ function fillScopeSelectors(){
   $("thTeacher").classList.toggle("hide", !isSuper);
   $("thStudentTeacher").classList.toggle("hide", !isSuper);
   $("filterTeacher").classList.toggle("hide", !isSuper);
+  $("moveBox").classList.toggle("hide", !isSuper);
 
   if(isSuper){
     $("scopeTeacher").innerHTML = "";
     $("filterTeacher").innerHTML = '<option value="">كل المعلّمين</option>';
+    $("moveTeacher").innerHTML = "";
     TEACHERS.forEach(function(t){
       var o1=document.createElement("option"); o1.value=t.username; o1.textContent=t.username; $("scopeTeacher").appendChild(o1);
       var o2=document.createElement("option"); o2.value=t.username; o2.textContent=t.username; $("filterTeacher").appendChild(o2);
+      var o3=document.createElement("option"); o3.value=t.username; o3.textContent=t.username; $("moveTeacher").appendChild(o3);
     });
-    $("scopeTeacher").onchange = function(){ fillStageOptionsFor($("scopeStage"), stagesForTeacherSelection(), false); };
+    $("scopeTeacher").onchange = function(){ fillStageOptionsFor($("scopeStage"), stagesForTeacherSelection(), false); updateScopeConfirm(); };
     $("filterTeacher").onchange = function(){
       var t = teacherByUsername($("filterTeacher").value);
       fillStageOptionsFor($("filterStage"), t ? t.stages : STAGES.map(function(s){return s.id;}), true);
       renderTable();
     };
+    $("moveTeacher").onchange = function(){
+      var t = teacherByUsername($("moveTeacher").value);
+      fillStageOptionsFor($("moveStage"), t ? t.stages : [], false);
+    };
     fillStageOptionsFor($("scopeStage"), stagesForTeacherSelection(), false);
     var ft = teacherByUsername($("filterTeacher").value);
     fillStageOptionsFor($("filterStage"), ft ? ft.stages : STAGES.map(function(s){return s.id;}), true);
+    var mt = teacherByUsername($("moveTeacher").value);
+    fillStageOptionsFor($("moveStage"), mt ? mt.stages : [], false);
   }else{
     fillStageOptionsFor($("scopeStage"), myStages, false);
     fillStageOptionsFor($("filterStage"), myStages, true);
   }
   fillUnitOptions($("scopeUnit"), false);
   fillUnitOptions($("filterUnit"), true);
+  $("scopeStage").onchange = updateScopeConfirm;
+  $("scopeUnit").onchange = updateScopeConfirm;
   $("filterStage").onchange = renderTable;
   $("filterUnit").onchange = renderTable;
+  updateScopeConfirm();
+}
+function updateScopeConfirm(){
+  var teacher = currentScopeTeacher();
+  var stage = $("scopeStage").value;
+  var unit = $("scopeUnit").value;
+  var el = $("scopeConfirm");
+  if(!teacher){ el.textContent = "⚠️ لا يوجد معلّم محدَّد — أضف معلّماً أولاً من «إدارة المعلّمين»."; return; }
+  if(!stage){ el.textContent = "⚠️ لم يُحدَّد لهذا المعلّم أي مرحلة بعد."; return; }
+  el.textContent = "✅ ستُضاف هذه الكلمات إلى: المعلّم «" + teacher + "» — مرحلة «" + stageName(stage) + "» — الوحدة " + unit;
 }
 function currentScopeTeacher(){ return role === "super" ? $("scopeTeacher").value : myUsername; }
 function currentFilterTeacher(){ return role === "super" ? $("filterTeacher").value : myUsername; }
@@ -1413,6 +1442,27 @@ $("btnClear").onclick = function(){
     return false;
   });
   saveWordsAll();
+};
+$("btnMoveWords").onclick = function(){
+  if(role !== "super") return;
+  var srcTeacher = $("filterTeacher").value;
+  var srcStage = $("filterStage").value;
+  var srcUnit = $("filterUnit").value;
+  var dstTeacher = $("moveTeacher").value;
+  var dstStage = $("moveStage").value;
+  var st = $("moveStatus");
+  if(!dstTeacher || !dstStage){ st.textContent = "اختر المعلّم والمرحلة الهدف أولاً."; return; }
+  var matches = words.filter(function(w){
+    if(srcTeacher && w.teacher !== srcTeacher) return false;
+    if(srcStage && w.stage !== srcStage) return false;
+    if(srcUnit && (+w.unit) !== (+srcUnit)) return false;
+    return true;
+  });
+  if(!matches.length){ st.textContent = "لا توجد كلمات مطابقة للفلاتر الحالية لنقلها."; return; }
+  if(!confirm("سيتم نقل " + matches.length + " كلمة إلى «" + dstTeacher + " — " + stageName(dstStage) + "». هل تريد المتابعة؟")) return;
+  matches.forEach(function(w){ w.teacher = dstTeacher; w.stage = dstStage; });
+  saveWordsAll();
+  st.textContent = "تم نقل " + matches.length + " كلمة إلى " + dstTeacher + " ✓";
 };
 function copyTextareaFallback(){
   var ta = $("bulk");
