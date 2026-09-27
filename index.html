@@ -351,12 +351,13 @@ td.en{direction:ltr;text-align:left}
         <select id="filterStage"></select>
         <select id="filterUnit"></select>
       </div>
-      <div class="scroll"><table id="wordTable"><thead><tr><th class="hide" id="thTeacher">المعلّم</th><th>المرحلة</th><th>الوحدة</th><th>English</th><th>العربية</th><th></th></tr></thead><tbody></tbody></table></div>
+      <div class="scroll"><table id="wordTable"><thead><tr><th class="hide" id="thSelect"><input type="checkbox" id="selectAllWords"></th><th class="hide" id="thTeacher">المعلّم</th><th>المرحلة</th><th>الوحدة</th><th>English</th><th>العربية</th><th></th></tr></thead><tbody></tbody></table></div>
+      <p class="hint hide" id="selCount" style="margin:6px 0 0"></p>
       <div class="row" style="margin-top:12px">
         <button class="btn ghost" id="btnClear" style="color:var(--bad)">حذف الكلمات المعروضة حالياً</button>
       </div>
       <div class="row hide" id="moveBox" style="margin-top:14px;padding-top:14px;border-top:1px dashed var(--line)">
-        <span class="hint" style="margin:0">نقل الكلمات المعروضة أعلاه إلى:</span>
+        <span class="hint" style="margin:0" id="moveBoxLabel">نقل الكلمات المعروضة أعلاه إلى:</span>
         <select id="moveTeacher"></select>
         <select id="moveStage"></select>
         <button class="btn ghost" id="btnMoveWords">🔀 نقل الآن</button>
@@ -1156,15 +1157,25 @@ function updateScopeConfirm(){
 function currentScopeTeacher(){ return role === "super" ? $("scopeTeacher").value : myUsername; }
 function currentFilterTeacher(){ return role === "super" ? $("filterTeacher").value : myUsername; }
 
-function fillNewTeacherStageChips(){
+function fillNewTeacherStageChips(presetStages){
   var box = $("newTeachStagesBox");
   box.innerHTML = "";
   STAGES.forEach(function(s){
     var label = document.createElement("label");
     label.className = "chip";
-    label.innerHTML = '<input type="checkbox" value="' + s.id + '"> ' + esc(s.name);
+    var checked = presetStages && presetStages.indexOf(s.id) !== -1;
+    label.innerHTML = '<input type="checkbox" value="' + s.id + '"' + (checked ? " checked" : "") + '> ' + esc(s.name);
     box.appendChild(label);
   });
+}
+function syncNewTeacherFormToUsername(){
+  var u = sanitizeUsername($("newTeachUser").value);
+  var t = u ? teacherByUsername(u) : null;
+  var st = $("teachersStatus");
+  fillNewTeacherStageChips(t ? t.stages : []);
+  st.textContent = t
+    ? ("✏️ تعدّل مراحل معلّم موجود («" + t.username + "») — فعّل/عطّل المراحل ثم اضغط حفظ، واترك كلمة المرور فارغة إن لم ترغب بتغييرها.")
+    : (u ? "معلّم جديد — اختر مراحله واكتب كلمة مرور له." : "");
 }
 function getCheckedNewTeacherStages(){
   var out = [];
@@ -1188,35 +1199,70 @@ function renderCloudStatus(){
 }
 
 /* ============ جدول الكلمات ============ */
+var selectedWordObjs = new Set();
+function updateSelCount(){
+  var el = $("selCount");
+  var n = selectedWordObjs.size;
+  el.classList.toggle("hide", role !== "super" || n === 0);
+  el.textContent = n ? ("✓ محدَّد: " + n + " كلمة — سيتم نقل هذه الكلمات المحدَّدة فقط عند الضغط على «نقل الآن».") : "";
+  var lbl = $("moveBoxLabel");
+  if(lbl) lbl.textContent = n ? ("نقل الكلمات المحدَّدة (" + n + ") إلى:") : "نقل الكلمات المعروضة أعلاه إلى:";
+}
 function renderTable(){
   var tb = $("wordTable").getElementsByTagName("tbody")[0];
   var mine = role === "teacher" ? words.filter(function(w){ return w.teacher===myUsername; }) : words;
   $("wc").textContent = mine.length;
   if(!tb) return;
-  var ft = role === "super" ? $("filterTeacher").value : myUsername;
+  var isSuper = role === "super";
+  $("thSelect").classList.toggle("hide", !isSuper);
+  var ft = isSuper ? $("filterTeacher").value : myUsername;
   var fs = $("filterStage") ? $("filterStage").value : "";
   var fu = $("filterUnit") ? $("filterUnit").value : "";
   tb.innerHTML = "";
+  var visibleWords = [];
   for(var i=0;i<words.length;i++){
     (function(i){
       var w = words[i];
       if(role === "teacher" && w.teacher !== myUsername) return;
-      if(role === "super" && ft && w.teacher !== ft) return;
+      if(isSuper && ft && w.teacher !== ft) return;
       if(fs && w.stage !== fs) return;
       if(fu && (+w.unit) !== (+fu)) return;
+      visibleWords.push(w);
       var tr = document.createElement("tr");
-      tr.innerHTML = (role==="super" ? '<td style="font-size:.82rem">'+esc(w.teacher)+'</td>' : '') +
+      var selTd = "";
+      if(isSuper){
+        selTd = '<td><input type="checkbox" class="wordSel"' + (selectedWordObjs.has(w) ? " checked" : "") + '></td>';
+      }
+      tr.innerHTML = selTd +
+                     (isSuper ? '<td style="font-size:.82rem">'+esc(w.teacher)+'</td>' : '') +
                      '<td style="font-size:.82rem">' + esc(stageName(w.stage)) + '</td>' +
                      '<td style="font-size:.82rem">' + esc(w.unit) + '</td>' +
                      '<td class="en">' + esc(w.en) + speakBtn(w.en) + '</td>' +
                      '<td>' + esc(w.ar) + '</td>';
+      if(isSuper){
+        var cb = tr.querySelector(".wordSel");
+        cb.onchange = function(){
+          if(cb.checked) selectedWordObjs.add(w); else selectedWordObjs.delete(w);
+          updateSelCount();
+        };
+      }
       var td = document.createElement("td");
       var del = document.createElement("button");
       del.className = "mini"; del.textContent = "✕"; del.title = "حذف";
-      del.onclick = function(){ words.splice(i,1); saveWordsAll(); };
+      del.onclick = function(){ selectedWordObjs.delete(w); words.splice(i,1); saveWordsAll(); };
       td.appendChild(del); tr.appendChild(td); tb.appendChild(tr);
     })(i);
   }
+  if(role === "super"){
+    var allChecked = visibleWords.length > 0 && visibleWords.every(function(w){ return selectedWordObjs.has(w); });
+    $("selectAllWords").checked = allChecked;
+    $("selectAllWords").onchange = function(){
+      if($("selectAllWords").checked) visibleWords.forEach(function(w){ selectedWordObjs.add(w); });
+      else visibleWords.forEach(function(w){ selectedWordObjs.delete(w); });
+      renderTable();
+    };
+  }
+  updateSelCount();
 }
 
 /* ============ إدارة المعلّمين (للمسؤول) ============ */
@@ -1361,7 +1407,7 @@ for(var lr=0; lr<loginRoleBtns.length; lr++){
 }
 $("pw1").addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); if($("pw2").classList.contains("hide")) submitPw(); else $("pw2").focus(); } });
 $("pw2").addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); submitPw(); } });
-$("btnLock").onclick = function(){ role = null; myUsername = null; myStages = []; pwMode = "enter"; loginRole = "super"; renderLock(); };
+$("btnLock").onclick = function(){ role = null; myUsername = null; myStages = []; pwMode = "enter"; loginRole = "super"; selectedWordObjs.clear(); renderLock(); };
 $("btnChangePw").onclick = function(){ pwMode = "changeSuper"; renderLock(); };
 $("btnRefreshStudents").onclick = refreshStudents;
 
@@ -1445,22 +1491,31 @@ $("btnClear").onclick = function(){
 };
 $("btnMoveWords").onclick = function(){
   if(role !== "super") return;
-  var srcTeacher = $("filterTeacher").value;
-  var srcStage = $("filterStage").value;
-  var srcUnit = $("filterUnit").value;
   var dstTeacher = $("moveTeacher").value;
   var dstStage = $("moveStage").value;
   var st = $("moveStatus");
   if(!dstTeacher || !dstStage){ st.textContent = "اختر المعلّم والمرحلة الهدف أولاً."; return; }
-  var matches = words.filter(function(w){
-    if(srcTeacher && w.teacher !== srcTeacher) return false;
-    if(srcStage && w.stage !== srcStage) return false;
-    if(srcUnit && (+w.unit) !== (+srcUnit)) return false;
-    return true;
-  });
-  if(!matches.length){ st.textContent = "لا توجد كلمات مطابقة للفلاتر الحالية لنقلها."; return; }
-  if(!confirm("سيتم نقل " + matches.length + " كلمة إلى «" + dstTeacher + " — " + stageName(dstStage) + "». هل تريد المتابعة؟")) return;
+
+  var matches;
+  var usingSelection = selectedWordObjs.size > 0;
+  if(usingSelection){
+    matches = Array.from(selectedWordObjs);
+  }else{
+    var srcTeacher = $("filterTeacher").value;
+    var srcStage = $("filterStage").value;
+    var srcUnit = $("filterUnit").value;
+    matches = words.filter(function(w){
+      if(srcTeacher && w.teacher !== srcTeacher) return false;
+      if(srcStage && w.stage !== srcStage) return false;
+      if(srcUnit && (+w.unit) !== (+srcUnit)) return false;
+      return true;
+    });
+  }
+  if(!matches.length){ st.textContent = "لا توجد كلمات محدَّدة أو مطابقة للفلاتر الحالية لنقلها."; return; }
+  var label = usingSelection ? (matches.length + " كلمة محدَّدة") : (matches.length + " كلمة (كل المعروض بالفلتر)");
+  if(!confirm("سيتم نقل " + label + " إلى «" + dstTeacher + " — " + stageName(dstStage) + "». هل تريد المتابعة؟")) return;
   matches.forEach(function(w){ w.teacher = dstTeacher; w.stage = dstStage; });
+  selectedWordObjs.clear();
   saveWordsAll();
   st.textContent = "تم نقل " + matches.length + " كلمة إلى " + dstTeacher + " ✓";
 };
@@ -1500,6 +1555,8 @@ $("btnExport").onclick = function(){
   setStatus("تم عرض نسخة من الكلمات — اضغط «📋 نسخ الكلمات» أو انسخها يدوياً.");
 };
 
+$("newTeachUser").addEventListener("input", syncNewTeacherFormToUsername);
+$("newTeachUser").addEventListener("blur", syncNewTeacherFormToUsername);
 $("btnAddTeacher").onclick = function(){
   var u = sanitizeUsername($("newTeachUser").value);
   var p = $("newTeachPass").value;
